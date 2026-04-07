@@ -38,3 +38,4 @@ out/
 
 ### Application Config (개인 설정, 보안 정보) ###
 src/main/resources/application.yml
+.env
