@@ -1,5 +1,7 @@
 package com.weartrack.backend.global.exception;
 
+import com.weartrack.backend.global.exception.code.BaseErrorCode;
+import com.weartrack.backend.global.exception.code.GlobalErrorCode;
 import com.weartrack.backend.global.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

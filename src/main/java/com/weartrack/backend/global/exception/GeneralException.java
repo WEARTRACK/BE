@@ -1,5 +1,6 @@
 package com.weartrack.backend.global.exception;
 
+import com.weartrack.backend.global.exception.code.BaseErrorCode;
 import lombok.Getter;
 
 @Getter

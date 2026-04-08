@@ -1,4 +1,4 @@
-package com.weartrack.backend.global.exception;
+package com.weartrack.backend.global.exception.code;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
