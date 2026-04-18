@@ -46,4 +46,8 @@ public class Member extends BaseTimeEntity {
     public boolean hasNickname() {
         return nickname != null && !nickname.isBlank();
     }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
 }
