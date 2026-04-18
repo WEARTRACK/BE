@@ -1,16 +1,35 @@
 spring:
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver # MySQL JDBC 드라이버 클래스 이름
-    url: ${DB_URL} # jdbc:mysql://localhost:3306/{데이터베이스명}
-    username: ${DB_USER} # MySQL 유저 이름
-    password: ${DB_PW} # MySQL 비밀번호
+    driver-class-name: com.mysql.cj.jdbc.Driver # MySQL JDBC 드라이버 클래스입니다.
+    url: ${DB_URL} # 예시: jdbc:mysql://localhost:3306/weartrack
+    username: ${DB_USER} # MySQL 사용자명입니다.
+    password: ${DB_PW} # MySQL 비밀번호입니다.
 
   jpa:
-    database: mysql # 사용할 데이터베이스 유형 지정 (MySQL)
+    database: mysql # 사용할 데이터베이스 타입입니다.
     database-platform: org.hibernate.dialect.MySQLDialect
-    show-sql: true # 실행된 SQL 쿼리를 콘솔에 출력할지 여부 설정
+    show-sql: true # 실행된 SQL을 콘솔에 출력합니다.
     hibernate:
-      ddl-auto: update # 애플리케이션 실행 시 데이터베이스 스키마의 상태를 설정
+      ddl-auto: update # 애플리케이션 실행 시 스키마를 반영합니다.
     properties:
       hibernate:
-        format_sql: true # 출력되는 SQL 쿼리를 보기 좋게 포맷팅
+        format_sql: true # SQL 로그를 보기 좋게 정렬합니다.
+
+# JWT 설정은 실행 환경의 환경변수에서 주입합니다.
+jwt:
+  secret: ${JWT_SECRET}
+
+# OAuth 클라이언트 설정은 실행 환경의 환경변수에서 주입합니다.
+oauth:
+  google:
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}
+    redirect-uri: ${GOOGLE_REDIRECT_URI}
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID}
+    client-secret: ${KAKAO_CLIENT_SECRET:}
+    redirect-uri: ${KAKAO_REDIRECT_URI}
+  naver:
+    client-id: ${NAVER_CLIENT_ID}
+    client-secret: ${NAVER_CLIENT_SECRET}
+    redirect-uri: ${NAVER_REDIRECT_URI}
