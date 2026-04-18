@@ -59,11 +59,11 @@ jobs:
 
             # 최신 이미지 가져와서 컨테이너 교체 실행
             sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
-            sudo docker pull sungminju/peakly:latest
+            sudo docker pull sungminju/weartrack:latest
 
             # 기존 컨테이너 제거 (중요)
-            sudo docker stop peakly || true
-            sudo docker rm peakly || true
+            sudo docker stop weartrack || true
+            sudo docker rm weartrack || true
             
             # docker compose 플러그인/구버전 모두 대응
             if command -v docker compose >/dev/null 2>&1; then
