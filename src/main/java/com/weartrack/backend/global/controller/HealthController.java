@@ -1,6 +1,5 @@
-package com.example.peakly.global.controller;
+package com.weartrack.backend.global.controller;
 
-import com.example.peakly.global.apiPayload.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
