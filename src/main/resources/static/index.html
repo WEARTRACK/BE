@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WearTrack Social Login Test</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Noto Sans KR", sans-serif;
+            background: #f4f6fb;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08);
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 32px;
+            line-height: 1.2;
+        }
+
+        p {
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .description {
+            margin-top: 12px;
+            color: #4b5563;
+        }
+
+        .button-group {
+            display: grid;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .login-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 52px;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .login-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+        }
+
+        .login-button.kakao {
+            background: #fee500;
+            color: #191600;
+        }
+
+        .login-button.google {
+            background: #ffffff;
+            color: #111827;
+            border: 1px solid #d1d5db;
+        }
+
+        .login-button.naver {
+            background: #03c75a;
+            color: #ffffff;
+        }
+
+        .info-box {
+            margin-top: 28px;
+            padding: 20px;
+            border-radius: 14px;
+            background: #eef2ff;
+            color: #312e81;
+        }
+
+        .info-box code {
+            word-break: break-all;
+        }
+
+        .meta-list {
+            margin-top: 16px;
+            padding-left: 18px;
+            color: #4b5563;
+            line-height: 1.7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>소셜 로그인 테스트</h1>
+        <p class="description">
+            브라우저에서 각 소셜 로그인 인가 화면으로 이동한 뒤, callback URL이 백엔드로 정상 복귀하는지 확인하는 테스트 페이지입니다.
+        </p>
+
+        <div class="button-group">
+            <button class="login-button kakao" type="button" id="kakao-login-button">카카오 로그인 테스트</button>
+            <button class="login-button google" type="button" id="google-login-button">구글 로그인 테스트</button>
+            <button class="login-button naver" type="button" id="naver-login-button">네이버 로그인 테스트</button>
+        </div>
+
+        <div class="info-box">
+            <strong>현재 callback URL 기준</strong>
+            <ul class="meta-list">
+                <li><code>http://localhost:8080/login/oauth2/code/kakao</code></li>
+                <li><code>http://localhost:8080/login/oauth2/code/google</code></li>
+                <li><code>http://localhost:8080/login/oauth2/code/naver</code></li>
+            </ul>
+        </div>
+
+        <ul class="meta-list">
+            <li>성공하면 provider 로그인 후 백엔드 callback endpoint가 JSON 응답을 반환합니다.</li>
+            <li>네이버는 state 값이 필요해서 테스트 페이지에서 자동 생성합니다.</li>
+            <li>구글/카카오/네이버 콘솔에 동일한 callback URL이 등록되어 있어야 합니다.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    const kakaoConfig = {
+        clientId: "09f8c5b79497689ad961478997dca619",
+        redirectUri: "http://localhost:8080/login/oauth2/code/kakao",
+        authorizeUri: "https://kauth.kakao.com/oauth/authorize",
+    };
+
+    const googleConfig = {
+        clientId: "580898159630-jjmhldc56tfm1votaj3fh96qubfcqjho.apps.googleusercontent.com",
+        redirectUri: "http://localhost:8080/login/oauth2/code/google",
+        authorizeUri: "https://accounts.google.com/o/oauth2/v2/auth",
+        scope: "openid email profile",
+    };
+
+    const naverConfig = {
+        clientId: "pBXowk7IH0N_OHULLlJl",
+        redirectUri: "http://localhost:8080/login/oauth2/code/naver",
+        authorizeUri: "https://nid.naver.com/oauth2.0/authorize",
+    };
+
+    function redirectTo(url) {
+        window.location.href = url;
+    }
+
+    function createRandomState() {
+        return Math.random().toString(36).slice(2, 14);
+    }
+
+    document.getElementById("kakao-login-button").addEventListener("click", function () {
+        const url = new URL(kakaoConfig.authorizeUri);
+        url.searchParams.set("response_type", "code");
+        url.searchParams.set("client_id", kakaoConfig.clientId);
+        url.searchParams.set("redirect_uri", kakaoConfig.redirectUri);
+        redirectTo(url.toString());
+    });
+
+    document.getElementById("google-login-button").addEventListener("click", function () {
+        const url = new URL(googleConfig.authorizeUri);
+        url.searchParams.set("response_type", "code");
+        url.searchParams.set("client_id", googleConfig.clientId);
+        url.searchParams.set("redirect_uri", googleConfig.redirectUri);
+        url.searchParams.set("scope", googleConfig.scope);
+        url.searchParams.set("access_type", "offline");
+        url.searchParams.set("prompt", "consent");
+        redirectTo(url.toString());
+    });
+
+    document.getElementById("naver-login-button").addEventListener("click", function () {
+        const state = createRandomState();
+        sessionStorage.setItem("naver-login-state", state);
+
+        const url = new URL(naverConfig.authorizeUri);
+        url.searchParams.set("response_type", "code");
+        url.searchParams.set("client_id", naverConfig.clientId);
+        url.searchParams.set("redirect_uri", naverConfig.redirectUri);
+        url.searchParams.set("state", state);
+        redirectTo(url.toString());
+    });
+</script>
+</body>
+</html>
