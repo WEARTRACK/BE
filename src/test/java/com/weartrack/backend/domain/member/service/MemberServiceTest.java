@@ -15,6 +15,7 @@ import com.weartrack.backend.domain.member.exception.MemberErrorCode;
 import com.weartrack.backend.domain.member.repository.MemberRepository;
 import com.weartrack.backend.global.exception.GeneralException;
 import java.util.Optional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,12 +52,30 @@ class MemberServiceTest {
 
         given(memberRepository.existsByNickname("new-nickname")).willReturn(false);
         given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+        given(memberRepository.saveAndFlush(member)).willReturn(member);
 
         NicknameSetResDto response = memberService.setNickname(1L, new NicknameSetReqDto("new-nickname"));
 
         assertThat(response.memberId()).isEqualTo(1L);
         assertThat(response.nickname()).isEqualTo("new-nickname");
         assertThat(response.profileCompleted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("닉네임 변경 저장 중 고유 제약 충돌이 나면 중복 닉네임 예외를 반환한다.")
+    void setNicknameFailWhenDuplicateDetectedOnFlush() {
+        Member member = Member.createPendingProfile();
+        ReflectionTestUtils.setField(member, "memberId", 1L);
+
+        given(memberRepository.existsByNickname("duplicated")).willReturn(false);
+        given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+        given(memberRepository.saveAndFlush(member))
+                .willThrow(new DataIntegrityViolationException("duplicate nickname"));
+
+        assertThatThrownBy(() -> memberService.setNickname(1L, new NicknameSetReqDto("duplicated")))
+                .isInstanceOf(GeneralException.class)
+                .extracting("errorCode")
+                .isEqualTo(MemberErrorCode.NICKNAME_ALREADY_EXISTS);
     }
 
     @Test

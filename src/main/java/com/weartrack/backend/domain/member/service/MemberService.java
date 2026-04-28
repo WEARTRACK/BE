@@ -7,6 +7,7 @@ import com.weartrack.backend.domain.member.entity.Member;
 import com.weartrack.backend.domain.member.exception.MemberErrorCode;
 import com.weartrack.backend.domain.member.repository.MemberRepository;
 import com.weartrack.backend.global.exception.GeneralException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,11 +42,20 @@ public class MemberService {
                 .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         member.updateNickname(request.nickname());
+        flushNicknameChange(member);
 
         return new NicknameSetResDto(
                 member.getMemberId(),
                 member.getNickname(),
                 member.hasNickname()
         );
+    }
+
+    private void flushNicknameChange(Member member) {
+        try {
+            memberRepository.saveAndFlush(member);
+        } catch (DataIntegrityViolationException e) {
+            throw new GeneralException(MemberErrorCode.NICKNAME_ALREADY_EXISTS);
+        }
     }
 }
