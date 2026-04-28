@@ -7,8 +7,12 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
+/**
+ * 인증 과정에서 사용하는 에러 코드 모음이다.
+ */
 public enum AuthErrorCode implements BaseErrorCode {
     UNSUPPORTED_PROVIDER(HttpStatus.BAD_REQUEST, "AUTH_400_1", "Unsupported social provider."),
+    INVALID_OAUTH_STATE(HttpStatus.BAD_REQUEST, "AUTH_400_2", "Invalid OAuth state."),
     INVALID_SOCIAL_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_1", "Invalid social access token."),
     SOCIAL_USER_INFO_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH_401_2", "Failed to load social user information."),
     INVALID_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_3", "Invalid JWT token.");

@@ -15,6 +15,9 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * JWT 생성과 파싱을 담당한다.
+ */
 @Component
 public class JwtTokenProvider {
 
@@ -56,6 +59,11 @@ public class JwtTokenProvider {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
+
+            String tokenType = claims.get("tokenType", String.class);
+            if (!"access".equals(tokenType)) {
+                throw new GeneralException(AuthErrorCode.INVALID_JWT_TOKEN);
+            }
 
             return claims.get("memberId", Long.class);
         } catch (JwtException | IllegalArgumentException e) {

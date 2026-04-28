@@ -161,11 +161,18 @@
         return Math.random().toString(36).slice(2, 14);
     }
 
+    function prepareOAuthState(url) {
+        const state = createRandomState();
+        document.cookie = "oauth-login-state=" + encodeURIComponent(state) + "; path=/; SameSite=Lax";
+        url.searchParams.set("state", state);
+    }
+
     document.getElementById("kakao-login-button").addEventListener("click", function () {
         const url = new URL(kakaoConfig.authorizeUri);
         url.searchParams.set("response_type", "code");
         url.searchParams.set("client_id", kakaoConfig.clientId);
         url.searchParams.set("redirect_uri", kakaoConfig.redirectUri);
+        prepareOAuthState(url);
         redirectTo(url.toString());
     });
 
@@ -177,18 +184,16 @@
         url.searchParams.set("scope", googleConfig.scope);
         url.searchParams.set("access_type", "offline");
         url.searchParams.set("prompt", "consent");
+        prepareOAuthState(url);
         redirectTo(url.toString());
     });
 
     document.getElementById("naver-login-button").addEventListener("click", function () {
-        const state = createRandomState();
-        sessionStorage.setItem("naver-login-state", state);
-
         const url = new URL(naverConfig.authorizeUri);
         url.searchParams.set("response_type", "code");
         url.searchParams.set("client_id", naverConfig.clientId);
         url.searchParams.set("redirect_uri", naverConfig.redirectUri);
-        url.searchParams.set("state", state);
+        prepareOAuthState(url);
         redirectTo(url.toString());
     });
 </script>

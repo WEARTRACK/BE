@@ -19,6 +19,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 회원과 소셜 계정 연동 정보를 저장한다.
+ */
 @Getter
 @Entity
 @Table(
@@ -60,6 +63,9 @@ public class SocialAccount extends BaseTimeEntity {
         this.providerEmail = providerEmail;
     }
 
+    /**
+     * 회원과 소셜 계정을 연결하는 엔티티를 만든다.
+     */
     public static SocialAccount of(Member member, AuthProvider provider, String providerUserId, String providerEmail) {
         return SocialAccount.builder()
                 .member(member)

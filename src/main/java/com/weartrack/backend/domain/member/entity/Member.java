@@ -15,6 +15,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 회원 기본 정보를 저장하는 엔티티다.
+ */
 @Getter
 @Entity
 @Table(name = "member")
@@ -37,12 +40,18 @@ public class Member extends BaseTimeEntity {
         this.nickname = nickname;
     }
 
+    /**
+     * 닉네임이 아직 없는 회원 엔티티를 만든다.
+     */
     public static Member createPendingProfile() {
         return Member.builder()
                 .nickname(null)
                 .build();
     }
 
+    /**
+     * 닉네임 입력이 완료된 회원인지 확인한다.
+     */
     public boolean hasNickname() {
         return nickname != null && !nickname.isBlank();
     }

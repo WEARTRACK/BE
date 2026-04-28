@@ -16,13 +16,14 @@ import com.weartrack.backend.domain.member.service.AuthService;
 import com.weartrack.backend.global.exception.GlobalExceptionHandler;
 import com.weartrack.backend.global.security.JwtAuthenticationFilter;
 import com.weartrack.backend.global.security.JwtTokenProvider;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
@@ -36,19 +37,19 @@ class AuthControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private AuthService authService;
 
-    @MockBean
+    @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @MockBean
+    @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
     @Test
     @DisplayName("소셜 로그인 요청이 유효하면 ApiResponse 형식으로 응답한다.")
     void socialLoginSuccess() throws Exception {
-        SocialLoginReqDto request = new SocialLoginReqDto(AuthProvider.KAKAO, "auth-code", null);
+        SocialLoginReqDto request = new SocialLoginReqDto(AuthProvider.KAKAO, "auth-code", "oauth-state");
         SocialLoginResDto response = new SocialLoginResDto(
                 1L,
                 null,
@@ -57,9 +58,10 @@ class AuthControllerTest {
                 "refresh-token"
         );
 
-        given(authService.login(request)).willReturn(response);
+        given(authService.login(request, "oauth-state")).willReturn(response);
 
         mockMvc.perform(post("/api/auth/social/login")
+                        .cookie(new Cookie("oauth-login-state", "oauth-state"))
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -72,9 +74,10 @@ class AuthControllerTest {
     @Test
     @DisplayName("소셜 로그인 요청에서 authorizationCode가 비어 있으면 검증 오류를 반환한다.")
     void socialLoginValidationFail() throws Exception {
-        SocialLoginReqDto request = new SocialLoginReqDto(AuthProvider.KAKAO, "", null);
+        SocialLoginReqDto request = new SocialLoginReqDto(AuthProvider.KAKAO, "", "oauth-state");
 
         mockMvc.perform(post("/api/auth/social/login")
+                        .cookie(new Cookie("oauth-login-state", "oauth-state"))
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -92,9 +95,12 @@ class AuthControllerTest {
                 "refresh-token"
         );
 
-        given(authService.login(eq(AuthProvider.KAKAO), eq("kakao-code"), eq(null))).willReturn(response);
+        given(authService.login(eq(AuthProvider.KAKAO), eq("kakao-code"), eq("kakao-state"), eq("kakao-state")))
+                .willReturn(response);
 
         mockMvc.perform(get("/login/oauth2/code/kakao")
+                        .cookie(new Cookie("oauth-login-state", "kakao-state"))
+                        .param("state", "kakao-state")
                         .param("code", "kakao-code"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
@@ -112,9 +118,11 @@ class AuthControllerTest {
                 "naver-refresh-token"
         );
 
-        given(authService.login(eq(AuthProvider.NAVER), eq("naver-code"), eq("naver-state"))).willReturn(response);
+        given(authService.login(eq(AuthProvider.NAVER), eq("naver-code"), eq("naver-state"), eq("naver-state")))
+                .willReturn(response);
 
         mockMvc.perform(get("/login/oauth2/code/naver")
+                        .cookie(new Cookie("oauth-login-state", "naver-state"))
                         .param("code", "naver-code")
                         .param("state", "naver-state"))
                 .andExpect(status().isOk())

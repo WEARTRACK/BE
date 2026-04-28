@@ -19,6 +19,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/**
+ * Authorization 헤더의 JWT를 검사해 인증 정보를 세팅한다.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -32,10 +35,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.objectMapper = objectMapper;
     }
 
-    @Override
     /**
      * Authorization 헤더의 Bearer 토큰을 검증하고 SecurityContext에 인증 정보를 저장합니다.
      */
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);

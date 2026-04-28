@@ -24,15 +24,14 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("refresh token도 동일한 방식으로 memberId를 추출할 수 있다.")
-    void createAndExtractRefreshToken() {
+    @DisplayName("refresh token은 API 인증용 memberId 추출에 사용할 수 없다.")
+    void extractMemberIdRejectsRefreshToken() {
         JwtTokenProvider jwtTokenProvider = new JwtTokenProvider(SECRET, 3600L, 1209600L);
 
         String refreshToken = jwtTokenProvider.createRefreshToken(2L);
 
-        Long memberId = jwtTokenProvider.extractMemberId(refreshToken);
-
-        assertThat(memberId).isEqualTo(2L);
+        assertThatThrownBy(() -> jwtTokenProvider.extractMemberId(refreshToken))
+                .isInstanceOf(GeneralException.class);
     }
 
     @Test
