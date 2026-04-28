@@ -12,9 +12,15 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
+/**
+ * Swagger OpenAPI 문서 설정을 구성한다.
+ */
 @Configuration
 public class SwaggerConfig {
 
+    /**
+     * API 문서 메타데이터와 JWT 보안 스키마를 등록한다.
+     */
     @Bean
     public OpenAPI openAPI() {
         final String securitySchemeName = "JWT";

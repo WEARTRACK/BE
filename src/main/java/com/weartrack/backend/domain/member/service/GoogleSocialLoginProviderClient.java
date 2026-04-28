@@ -15,6 +15,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+/**
+ * Google 소셜 로그인 연동을 처리한다.
+ */
 @Component
 public class GoogleSocialLoginProviderClient implements SocialLoginProviderClient {
 
@@ -38,15 +41,18 @@ public class GoogleSocialLoginProviderClient implements SocialLoginProviderClien
         this.redirectUri = redirectUri;
     }
 
+    /**
+     * 현재 구현체가 처리하는 제공자를 반환한다.
+     */
     @Override
     public AuthProvider supports() {
         return AuthProvider.GOOGLE;
     }
 
-    @Override
     /**
      * Google 인가 코드를 access token으로 교환한 뒤 사용자 정보를 조회합니다.
      */
+    @Override
     public SocialUserInfo getUserInfo(String authorizationCode, String state) {
         try {
             String accessToken = exchangeCodeForAccessToken(authorizationCode);

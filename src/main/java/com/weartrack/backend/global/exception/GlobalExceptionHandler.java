@@ -11,10 +11,16 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+/**
+ * 애플리케이션 전역 예외를 공통 API 응답으로 변환한다.
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * 비즈니스 예외를 표준 실패 응답으로 변환한다.
+     */
     @ExceptionHandler(GeneralException.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneralException(GeneralException e) {
         BaseErrorCode errorCode = e.getErrorCode();
@@ -23,6 +29,9 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure(errorCode.getCode(), errorCode.getMessage(), null));
     }
 
+    /**
+     * 요청 바디 검증 실패를 처리한다.
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException e) {
         String errorMessage = e.getBindingResult()
@@ -38,6 +47,9 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure(errorCode.getCode(), errorMessage, null));
     }
 
+    /**
+     * 요청 파라미터 검증 실패를 처리한다.
+     */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(ConstraintViolationException e) {
         String errorMessage = e.getConstraintViolations()
@@ -52,6 +64,9 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure(errorCode.getCode(), errorMessage, null));
     }
 
+    /**
+     * 지원하지 않는 HTTP 메서드 요청을 처리한다.
+     */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodNotAllowedException(HttpRequestMethodNotSupportedException e) {
         GlobalErrorCode errorCode = GlobalErrorCode.METHOD_NOT_ALLOWED;
@@ -60,6 +75,9 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure(errorCode.getCode(), errorCode.getMessage(), null));
     }
 
+    /**
+     * 처리되지 않은 예외를 공통 서버 에러 응답으로 변환한다.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleAllException(Exception e) {
         log.error("Unhandled Exception: ", e);

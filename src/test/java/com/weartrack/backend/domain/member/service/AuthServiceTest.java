@@ -12,11 +12,11 @@ import com.weartrack.backend.domain.member.dto.request.SocialLoginReqDto;
 import com.weartrack.backend.domain.member.dto.response.SocialLoginResDto;
 import com.weartrack.backend.domain.member.entity.Member;
 import com.weartrack.backend.domain.member.entity.SocialAccount;
-import com.weartrack.backend.domain.member.repository.MemberRepository;
 import com.weartrack.backend.domain.member.repository.SocialAccountRepository;
 import com.weartrack.backend.global.security.JwtTokenProvider;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,10 +32,10 @@ class AuthServiceTest {
     private SocialLoginProviderClient socialLoginProviderClient;
 
     @Mock
-    private MemberRepository memberRepository;
+    private SocialAccountRepository socialAccountRepository;
 
     @Mock
-    private SocialAccountRepository socialAccountRepository;
+    private AuthRegistrationService authRegistrationService;
 
     @Mock
     private JwtTokenProvider jwtTokenProvider;
@@ -47,8 +47,8 @@ class AuthServiceTest {
         given(socialLoginProviderClient.supports()).willReturn(AuthProvider.KAKAO);
         authService = new AuthService(
                 List.of(socialLoginProviderClient),
-                memberRepository,
                 socialAccountRepository,
+                authRegistrationService,
                 jwtTokenProvider
         );
     }
@@ -72,14 +72,15 @@ class AuthServiceTest {
                 "weartrack@example.com"
         );
 
-        given(socialLoginProviderClient.getUserInfo("auth-code", null)).willReturn(socialUserInfo);
+        given(socialLoginProviderClient.getUserInfo("auth-code", "oauth-state")).willReturn(socialUserInfo);
         given(socialAccountRepository.findByProviderAndProviderUserId(AuthProvider.KAKAO, "provider-user-id"))
                 .willReturn(Optional.of(socialAccount));
         given(jwtTokenProvider.createAccessToken(1L)).willReturn("access-token");
         given(jwtTokenProvider.createRefreshToken(1L)).willReturn("refresh-token");
 
         SocialLoginResDto response = authService.login(
-                new SocialLoginReqDto(AuthProvider.KAKAO, "auth-code", null)
+                new SocialLoginReqDto(AuthProvider.KAKAO, "auth-code", "oauth-state"),
+                "oauth-state"
         );
 
         assertThat(response.memberId()).isEqualTo(1L);
@@ -87,7 +88,7 @@ class AuthServiceTest {
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
         assertThat(response.profileCompleted()).isFalse();
 
-        verify(memberRepository, never()).save(any(Member.class));
+        verify(authRegistrationService, never()).registerNewMember(any(SocialUserInfo.class));
     }
 
     @Test
@@ -102,15 +103,16 @@ class AuthServiceTest {
                 "new-user@example.com"
         );
 
-        given(socialLoginProviderClient.getUserInfo("new-auth-code", null)).willReturn(socialUserInfo);
+        given(socialLoginProviderClient.getUserInfo("new-auth-code", "oauth-state")).willReturn(socialUserInfo);
         given(socialAccountRepository.findByProviderAndProviderUserId(AuthProvider.KAKAO, "new-provider-user-id"))
                 .willReturn(Optional.empty());
-        given(memberRepository.save(any(Member.class))).willReturn(savedMember);
+        given(authRegistrationService.registerNewMember(any(SocialUserInfo.class))).willReturn(savedMember);
         given(jwtTokenProvider.createAccessToken(2L)).willReturn("new-access-token");
         given(jwtTokenProvider.createRefreshToken(2L)).willReturn("new-refresh-token");
 
         SocialLoginResDto response = authService.login(
-                new SocialLoginReqDto(AuthProvider.KAKAO, "new-auth-code", null)
+                new SocialLoginReqDto(AuthProvider.KAKAO, "new-auth-code", "oauth-state"),
+                "oauth-state"
         );
 
         assertThat(response.memberId()).isEqualTo(2L);
@@ -118,7 +120,44 @@ class AuthServiceTest {
         assertThat(response.refreshToken()).isEqualTo("new-refresh-token");
         assertThat(response.profileCompleted()).isFalse();
 
-        verify(memberRepository).save(any(Member.class));
-        verify(socialAccountRepository).save(any(SocialAccount.class));
+        verify(authRegistrationService).registerNewMember(any(SocialUserInfo.class));
+    }
+
+    @Test
+    @DisplayName("동시 생성 충돌이 나면 기존 소셜 계정을 다시 조회해 로그인한다.")
+    void loginRetriesLookupWhenRegistrationCollides() {
+        Member existingMember = Member.createPendingProfile();
+        ReflectionTestUtils.setField(existingMember, "memberId", 3L);
+
+        SocialAccount socialAccount = SocialAccount.of(
+                existingMember,
+                AuthProvider.KAKAO,
+                "provider-user-id",
+                "weartrack@example.com"
+        );
+
+        SocialUserInfo socialUserInfo = new SocialUserInfo(
+                AuthProvider.KAKAO,
+                "provider-user-id",
+                "weartrack@example.com"
+        );
+
+        given(socialLoginProviderClient.getUserInfo("auth-code", "oauth-state")).willReturn(socialUserInfo);
+        given(socialAccountRepository.findByProviderAndProviderUserId(AuthProvider.KAKAO, "provider-user-id"))
+                .willReturn(Optional.empty(), Optional.of(socialAccount));
+        given(authRegistrationService.registerNewMember(any(SocialUserInfo.class)))
+                .willThrow(new DataIntegrityViolationException("duplicate social account"));
+        given(jwtTokenProvider.createAccessToken(3L)).willReturn("access-token");
+        given(jwtTokenProvider.createRefreshToken(3L)).willReturn("refresh-token");
+
+        SocialLoginResDto response = authService.login(
+                new SocialLoginReqDto(AuthProvider.KAKAO, "auth-code", "oauth-state"),
+                "oauth-state"
+        );
+
+        assertThat(response.memberId()).isEqualTo(3L);
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        assertThat(response.refreshToken()).isEqualTo("refresh-token");
+        verify(authRegistrationService).registerNewMember(any(SocialUserInfo.class));
     }
 }

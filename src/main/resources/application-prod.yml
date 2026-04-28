@@ -6,7 +6,7 @@ spring:
     password: ${DB_PW} # MySQL 비밀번호입니다.
 
   jpa:
-    database: mysql # 사용할 데이터베이스 타입입니다.
+    database: mysql # 사용하는 데이터베이스 타입입니다.
     database-platform: org.hibernate.dialect.MySQLDialect
     show-sql: true # 실행된 SQL을 콘솔에 출력합니다.
     hibernate:
@@ -19,8 +19,15 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
 
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,https://weartrack.co.kr}
+
 # OAuth 클라이언트 설정은 실행 환경의 환경변수에서 주입합니다.
 oauth:
+  client:
+    connect-timeout-seconds: ${OAUTH_CLIENT_CONNECT_TIMEOUT_SECONDS:3}
+    read-timeout-seconds: ${OAUTH_CLIENT_READ_TIMEOUT_SECONDS:5}
   google:
     client-id: ${GOOGLE_CLIENT_ID}
     client-secret: ${GOOGLE_CLIENT_SECRET}

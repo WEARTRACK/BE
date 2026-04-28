@@ -6,6 +6,9 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
+/**
+ * 전역에서 공통으로 사용하는 에러 코드다.
+ */
 public enum GlobalErrorCode implements BaseErrorCode {
     // 공통 에러들 처리
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_500", "서버 에러가 발생했습니다."),
