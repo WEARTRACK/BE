@@ -26,7 +26,7 @@ public class SwaggerConfig {
                         .version("1.0.0"))
 
                 .servers(List.of(
-                        new Server().url("https://weartrack.co.kr").description("Production"),
+                        new Server().url("https://wear-track.com").description("Production"),
                         new Server().url("http://localhost:8080").description("Local")))
 
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
