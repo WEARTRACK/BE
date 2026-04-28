@@ -6,7 +6,9 @@ import com.weartrack.backend.global.response.ApiResponse;
 import com.weartrack.backend.global.security.JwtPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +32,7 @@ public class ClothesPhotoController {
     )
     public ApiResponse<ClothesPhotoCreateResponse> uploadClothesPhoto(
             @AuthenticationPrincipal JwtPrincipal principal,
-            @RequestPart("image") MultipartFile image
+            @Valid @RequestPart("image") MultipartFile image
     ) {
         Long userId = principal.memberId();
 

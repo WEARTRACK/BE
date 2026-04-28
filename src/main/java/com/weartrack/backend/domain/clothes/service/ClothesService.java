@@ -30,7 +30,7 @@ public class ClothesService {
         Clothes clothes = Clothes.builder()
                 .clothesPhotoId(clothesPhoto.getId())
                 .closetSectionId(request.sectionId())
-                .imageUrl(request.imageUrl())
+                .imageUrl(clothesPhoto.getImageUrl())
                 .color(request.color())
                 .category(request.category())
                 .price(request.price())

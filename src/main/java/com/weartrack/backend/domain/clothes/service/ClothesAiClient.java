@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.File;
+import java.time.Duration;
 
 @Component
 @RequiredArgsConstructor
@@ -34,6 +35,7 @@ public class ClothesAiClient {
                 .body(BodyInserters.fromMultipartData(body))
                 .retrieve()
                 .bodyToMono(AiClothesPredictionResponse.class)
+                .timeout(Duration.ofSeconds(40))
                 .block();
     }
 }

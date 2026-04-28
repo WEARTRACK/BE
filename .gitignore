@@ -41,4 +41,4 @@ src/main/resources/application.yml
 .env
 
 src/main/resources/application-local.yml
-uploads/S
+uploads/

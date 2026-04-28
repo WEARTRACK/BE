@@ -54,8 +54,11 @@ public class FileStorageService {
 
         String contentType = image.getContentType();
 
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("이미지 파일만 업로드할 수 있습니다.");
+        if (contentType == null ||
+                !(contentType.equals("image/jpeg")
+                        || contentType.equals("image/png")
+                        || contentType.equals("image/webp"))) {
+            throw new IllegalArgumentException("이미지 파일은 JPG, PNG, WebP 형식만 업로드할 수 있습니다.");
         }
     }
 
@@ -64,7 +67,16 @@ public class FileStorageService {
             return ".jpg";
         }
 
-        return filename.substring(filename.lastIndexOf("."));
+        String extension = filename.substring(filename.lastIndexOf(".")).toLowerCase();
+
+        if (!extension.equals(".jpg")
+                && !extension.equals(".jpeg")
+                && !extension.equals(".png")
+                && !extension.equals(".webp")) {
+            throw new IllegalArgumentException("허용되지 않는 이미지 확장자입니다.");
+        }
+
+        return extension;
     }
 
     @Getter

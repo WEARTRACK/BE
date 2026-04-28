@@ -27,10 +27,10 @@ public class ColorMapper {
     }
 
     public static String toEnglish(String koreanColor) {
-        if (koreanColor == null) {
-            return null;
+        if (koreanColor == null || koreanColor.isBlank()) {
+            return "unknown";
         }
 
-        return COLOR_MAP.getOrDefault(koreanColor.trim(), koreanColor);
+        return COLOR_MAP.getOrDefault(koreanColor.trim(), "unknown");
     }
 }

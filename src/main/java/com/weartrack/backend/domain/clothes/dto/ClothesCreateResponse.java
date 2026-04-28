@@ -9,7 +9,7 @@ public record ClothesCreateResponse(
         String color,
         String category,
         Integer price,
-        Long setionId,
+        Long sectionId,
         LocalDateTime createdAt
 ) {
 }
