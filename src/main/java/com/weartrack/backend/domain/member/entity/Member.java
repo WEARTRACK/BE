@@ -29,7 +29,7 @@ public class Member extends BaseTimeEntity {
     @Column(name = "member_id")
     private Long memberId;
 
-    @Column(name = "nickname", unique = true, length = 30)
+    @Column(name = "nickname", unique = true, length = 5)
     private String nickname;
 
     @OneToMany(mappedBy = "member")

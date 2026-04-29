@@ -34,7 +34,7 @@ public class MemberController {
     public ApiResponse<NicknameAvailabilityCheckResDto> checkNicknameAvailability(
             @RequestParam
             @NotBlank
-            @Size(max = 30)
+            @Size(max = 5)
             String nickname
     ) {
         return ApiResponse.success(memberService.checkNicknameAvailability(nickname));

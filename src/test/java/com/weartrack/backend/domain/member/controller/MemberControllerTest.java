@@ -52,11 +52,11 @@ class MemberControllerTest {
     @Test
     @DisplayName("닉네임 중복 확인 요청이 성공하면 사용 가능 여부를 반환한다.")
     void checkNicknameAvailability() throws Exception {
-        given(memberService.checkNicknameAvailability("weartrack"))
-                .willReturn(new NicknameAvailabilityCheckResDto("weartrack", true));
+        given(memberService.checkNicknameAvailability("track"))
+                .willReturn(new NicknameAvailabilityCheckResDto("track", true));
 
         mockMvc.perform(get("/api/members/nickname/check")
-                        .param("nickname", "weartrack"))
+                        .param("nickname", "track"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.result.available").value(true));
@@ -67,6 +67,15 @@ class MemberControllerTest {
     void checkNicknameAvailabilityValidationFail() throws Exception {
         mockMvc.perform(get("/api/members/nickname/check")
                         .param("nickname", ""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.isSuccess").value(false));
+    }
+
+    @Test
+    @DisplayName("nickname check returns validation error when nickname exceeds 5 chars")
+    void checkNicknameAvailabilityValidationFailWhenNicknameTooLong() throws Exception {
+        mockMvc.perform(get("/api/members/nickname/check")
+                        .param("nickname", "abcdef"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.isSuccess").value(false));
     }
@@ -83,16 +92,16 @@ class MemberControllerTest {
         context.setAuthentication(authenticationToken);
         SecurityContextHolder.setContext(context);
 
-        given(memberService.setNickname(1L, new NicknameSetReqDto("weartrack")))
-                .willReturn(new NicknameSetResDto(1L, "weartrack", true));
+        given(memberService.setNickname(1L, new NicknameSetReqDto("track")))
+                .willReturn(new NicknameSetResDto(1L, "track", true));
 
         try {
             mockMvc.perform(patch("/api/members/me/nickname")
                             .contentType(APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(new NicknameSetReqDto("weartrack"))))
+                            .content(objectMapper.writeValueAsString(new NicknameSetReqDto("track"))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.isSuccess").value(true))
-                    .andExpect(jsonPath("$.result.nickname").value("weartrack"))
+                    .andExpect(jsonPath("$.result.nickname").value("track"))
                     .andExpect(jsonPath("$.result.profileCompleted").value(true));
         } finally {
             SecurityContextHolder.clearContext();

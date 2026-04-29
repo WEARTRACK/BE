@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 
 public record NicknameSetReqDto(
         @NotBlank
-        @Size(max = 30)
+        @Size(max = 5)
         String nickname
 ) {
 }

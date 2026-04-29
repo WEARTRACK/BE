@@ -36,11 +36,11 @@ class MemberServiceTest {
     @Test
     @DisplayName("닉네임이 중복되지 않으면 사용 가능 응답을 반환한다.")
     void checkNicknameAvailability() {
-        given(memberRepository.existsByNickname("weartrack")).willReturn(false);
+        given(memberRepository.existsByNickname("track")).willReturn(false);
 
-        NicknameAvailabilityCheckResDto response = memberService.checkNicknameAvailability("weartrack");
+        NicknameAvailabilityCheckResDto response = memberService.checkNicknameAvailability("track");
 
-        assertThat(response.nickname()).isEqualTo("weartrack");
+        assertThat(response.nickname()).isEqualTo("track");
         assertThat(response.available()).isTrue();
     }
 
@@ -50,14 +50,14 @@ class MemberServiceTest {
         Member member = Member.createPendingProfile();
         ReflectionTestUtils.setField(member, "memberId", 1L);
 
-        given(memberRepository.existsByNickname("new-nickname")).willReturn(false);
+        given(memberRepository.existsByNickname("new01")).willReturn(false);
         given(memberRepository.findById(1L)).willReturn(Optional.of(member));
         given(memberRepository.saveAndFlush(member)).willReturn(member);
 
-        NicknameSetResDto response = memberService.setNickname(1L, new NicknameSetReqDto("new-nickname"));
+        NicknameSetResDto response = memberService.setNickname(1L, new NicknameSetReqDto("new01"));
 
         assertThat(response.memberId()).isEqualTo(1L);
-        assertThat(response.nickname()).isEqualTo("new-nickname");
+        assertThat(response.nickname()).isEqualTo("new01");
         assertThat(response.profileCompleted()).isTrue();
     }
 
@@ -67,12 +67,12 @@ class MemberServiceTest {
         Member member = Member.createPendingProfile();
         ReflectionTestUtils.setField(member, "memberId", 1L);
 
-        given(memberRepository.existsByNickname("duplicated")).willReturn(false);
+        given(memberRepository.existsByNickname("dup01")).willReturn(false);
         given(memberRepository.findById(1L)).willReturn(Optional.of(member));
         given(memberRepository.saveAndFlush(member))
                 .willThrow(new DataIntegrityViolationException("duplicate nickname"));
 
-        assertThatThrownBy(() -> memberService.setNickname(1L, new NicknameSetReqDto("duplicated")))
+        assertThatThrownBy(() -> memberService.setNickname(1L, new NicknameSetReqDto("dup01")))
                 .isInstanceOf(GeneralException.class)
                 .extracting("errorCode")
                 .isEqualTo(MemberErrorCode.NICKNAME_ALREADY_EXISTS);
@@ -81,9 +81,9 @@ class MemberServiceTest {
     @Test
     @DisplayName("이미 사용 중인 닉네임이면 예외를 발생시킨다.")
     void setNicknameFailWhenAlreadyExists() {
-        given(memberRepository.existsByNickname("duplicated")).willReturn(true);
+        given(memberRepository.existsByNickname("dup01")).willReturn(true);
 
-        assertThatThrownBy(() -> memberService.setNickname(1L, new NicknameSetReqDto("duplicated")))
+        assertThatThrownBy(() -> memberService.setNickname(1L, new NicknameSetReqDto("dup01")))
                 .isInstanceOf(GeneralException.class)
                 .extracting("errorCode")
                 .isEqualTo(MemberErrorCode.NICKNAME_ALREADY_EXISTS);
