@@ -15,7 +15,7 @@ import java.util.UUID;
 @Service
 public class FileStorageService {
 
-    @Value("${file.upload-dir}")
+    @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
     public SavedFile save(MultipartFile image) {
