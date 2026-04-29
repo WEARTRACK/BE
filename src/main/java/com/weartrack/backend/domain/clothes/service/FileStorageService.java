@@ -1,5 +1,7 @@
 package com.weartrack.backend.domain.clothes.service;
 
+import com.weartrack.backend.domain.closet.exception.ClosetErrorCode;
+import com.weartrack.backend.global.exception.GeneralException;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -87,6 +89,37 @@ public class FileStorageService {
         public SavedFile(String imageUrl, File file) {
             this.imageUrl = imageUrl;
             this.file = file;
+        }
+    }
+
+    public SavedFile saveCloset(MultipartFile image) {
+        validateImage(image);
+
+        try {
+            Path uploadPath = Paths.get(uploadDir, "closets");
+
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            String originalFilename = image.getOriginalFilename();
+            String extension = getExtension(originalFilename);
+            String savedFilename = UUID.randomUUID() + extension;
+
+            Path savedPath = uploadPath.resolve(savedFilename);
+
+            Files.copy(
+                    image.getInputStream(),
+                    savedPath,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+
+            String imageUrl = "/" + uploadDir + "/closets/" + savedFilename;
+
+            return new SavedFile(imageUrl, savedPath.toFile());
+
+        } catch (IOException e) {
+            throw new GeneralException(ClosetErrorCode.CLOSET_IMAGE_SAVE_FAILED);
         }
     }
 }
