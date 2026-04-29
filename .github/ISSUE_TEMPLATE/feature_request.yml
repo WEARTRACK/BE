@@ -1,15 +1,28 @@
----
-name: "기능 추가"
-about: "새로운 작업 내역을 작성합니다."
+name: "✨ 작업 내역 (기능 추가/수정)"
+description: "새로운 기능을 추가하거나 수정할 때 사용합니다."
 title: "[FEAT] "
-labels: enhancement
----
-## ✨ 기능 요약
-
-## 📌 작업 내용
-- [ ]
-- [ ]
-- [ ]
-
-## 🌱 참고 사항
--
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: "✨ 기능 요약"
+      description: "어떤 작업인지 간단하게 설명해 주세요."
+    validations:
+      required: true
+  - type: textarea
+    id: tasks
+    attributes:
+      label: "📌 작업 내용"
+      description: "체크리스트 형태로 할 일을 적어주세요."
+      value: |
+        - [ ] 
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: "🌱 참고 사항"
+      description: "참고할 링크나 기타 스크린샷이 있다면 남겨주세요."
