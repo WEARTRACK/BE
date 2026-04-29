@@ -1,0 +1,20 @@
+package com.weartrack.backend.domain.closet.exception;
+
+import com.weartrack.backend.global.exception.code.BaseErrorCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@RequiredArgsConstructor
+public enum ClosetErrorCode implements BaseErrorCode {
+
+    INVALID_TEMPLATE_ID("CLOSET_4001", "존재하지 않는 옷장 템플릿입니다.", HttpStatus.BAD_REQUEST),
+    INVALID_SECTION_COUNT("CLOSET_4002", "템플릿의 칸 개수와 요청 칸 개수가 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
+    EMPTY_SECTION_NAME("WARDROBE_4003", "칸 이름을 모두 입력해주세요.", HttpStatus.FORBIDDEN),
+    INVALID_IMAGE("CLOSET_4004", "옷장 이미지는 필수입니다.", HttpStatus.BAD_REQUEST);
+
+    private final String code;
+    private final String message;
+    private final HttpStatus status;
+}

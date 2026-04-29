@@ -89,4 +89,35 @@ public class FileStorageService {
             this.file = file;
         }
     }
+
+    public SavedFile saveCloset(MultipartFile image) {
+        validateImage(image);
+
+        try {
+            Path uploadPath = Paths.get("uploads/closets");
+
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            String originalFilename = image.getOriginalFilename();
+            String extension = getExtension(originalFilename);
+            String savedFilename = UUID.randomUUID() + extension;
+
+            Path savedPath = uploadPath.resolve(savedFilename);
+
+            Files.copy(
+                    image.getInputStream(),
+                    savedPath,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+
+            String imageUrl = "/uploads/closets/" + savedFilename;
+
+            return new SavedFile(imageUrl, savedPath.toFile());
+
+        } catch (IOException e) {
+            throw new IllegalArgumentException("옷장 이미지 저장 중 오류가 발생했습니다.");
+        }
+    }
 }
