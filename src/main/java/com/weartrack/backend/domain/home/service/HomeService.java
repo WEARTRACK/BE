@@ -19,8 +19,8 @@ public class HomeService {
     public HomeSummaryResDto getHomeSummary(Long memberId) {
         LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
 
-        int totalClothesCount = clothesRepository.countByMemberId(memberId);
-        int weeklyExpenseAmount = clothesRepository.sumWeeklyExpenseAmount(memberId, oneWeekAgo);
+        long totalClothesCount = clothesRepository.countByMemberId(memberId);
+        long weeklyExpenseAmount = clothesRepository.sumWeeklyExpenseAmount(memberId, oneWeekAgo);
 
         return new HomeSummaryResDto(
                 totalClothesCount,

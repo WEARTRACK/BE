@@ -9,21 +9,21 @@ import org.springframework.data.repository.query.Param;
 public interface ClothesRepository extends JpaRepository<Clothes, Long> {
 
     @Query("""
-            SELECT COUNT(c)
-            FROM Clothes c
-            JOIN ClothesPhoto cp ON c.clothesPhotoId = cp.id
-            WHERE cp.memberId = :memberId
-            """)
-    int countByMemberId(@Param("memberId") Long memberId);
+        SELECT COUNT(c)
+        FROM Clothes c
+        JOIN ClothesPhoto cp ON c.clothesPhotoId = cp.id
+        WHERE cp.memberId = :memberId
+        """)
+    long countByMemberId(@Param("memberId") Long memberId);
 
     @Query("""
-            SELECT COALESCE(SUM(c.price), 0)
-            FROM Clothes c
-            JOIN ClothesPhoto cp ON c.clothesPhotoId = cp.id
-            WHERE cp.memberId = :memberId
-              AND c.createdAt >= :startDate
-            """)
-    int sumWeeklyExpenseAmount(
+        SELECT COALESCE(SUM(c.price), 0L)
+        FROM Clothes c
+        JOIN ClothesPhoto cp ON c.clothesPhotoId = cp.id
+        WHERE cp.memberId = :memberId
+          AND c.createdAt >= :startDate
+        """)
+    long sumWeeklyExpenseAmount(
             @Param("memberId") Long memberId,
             @Param("startDate") LocalDateTime startDate
     );

@@ -1,8 +1,8 @@
 package com.weartrack.backend.domain.home.dto;
 
 public record HomeSummaryResDto(
-        int totalClothesCount,
-        int weeklyExpenseAmount,
+        long totalClothesCount,
+        long weeklyExpenseAmount,
         int weeklyClosetUsageRate
 ) {
 }
