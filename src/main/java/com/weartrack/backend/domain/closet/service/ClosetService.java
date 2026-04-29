@@ -75,5 +75,16 @@ public class ClosetService {
         if (hasEmptyName) {
             throw new GeneralException(ClosetErrorCode.EMPTY_SECTION_NAME);
         }
+
+        List<Integer> sectionOrders = sections.stream()
+                .map(ClosetSectionCreateReqDto::sectionOrder)
+                .sorted()
+                .toList();
+
+        List<Integer> validOrders = template.getSectionOrders();
+
+        if (!sectionOrders.equals(validOrders)) {
+            throw new GeneralException(ClosetErrorCode.INVALID_SECTION_ORDER);
+        }
     }
 }

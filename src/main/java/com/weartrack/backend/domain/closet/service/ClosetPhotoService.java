@@ -17,6 +17,7 @@ public class ClosetPhotoService {
     private final FileStorageService fileStorageService;
 
     public ClosetPhotoCreateResDto uploadClosetPhoto(Long memberId, Integer templateId, MultipartFile image) {
+        // TODO: S3 이미지 저장 및 옷장 사진 이력 저장 시 memberId 사용 예정
         ClosetTemplate template = ClosetTemplate.from(templateId);
 
         FileStorageService.SavedFile savedFile = fileStorageService.saveCloset(image);

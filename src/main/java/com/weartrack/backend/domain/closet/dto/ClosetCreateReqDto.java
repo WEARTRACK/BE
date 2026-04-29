@@ -15,6 +15,6 @@ public record ClosetCreateReqDto(
         String imageUrl,
 
         @NotEmpty(message = "칸 정보는 필수입니다.")
-        List<@Valid ClosetSectionCreateReqDto> sections
+        List<@NotNull @Valid ClosetSectionCreateReqDto> sections
 ) {
 }

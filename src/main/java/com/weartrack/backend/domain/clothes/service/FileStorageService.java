@@ -1,5 +1,7 @@
 package com.weartrack.backend.domain.clothes.service;
 
+import com.weartrack.backend.domain.closet.exception.ClosetErrorCode;
+import com.weartrack.backend.global.exception.GeneralException;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -94,7 +96,7 @@ public class FileStorageService {
         validateImage(image);
 
         try {
-            Path uploadPath = Paths.get("uploads/closets");
+            Path uploadPath = Paths.get(uploadDir, "closets");
 
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
@@ -112,12 +114,12 @@ public class FileStorageService {
                     StandardCopyOption.REPLACE_EXISTING
             );
 
-            String imageUrl = "/uploads/closets/" + savedFilename;
+            String imageUrl = "/" + uploadDir + "/closets/" + savedFilename;
 
             return new SavedFile(imageUrl, savedPath.toFile());
 
         } catch (IOException e) {
-            throw new IllegalArgumentException("옷장 이미지 저장 중 오류가 발생했습니다.");
+            throw new GeneralException(ClosetErrorCode.CLOSET_IMAGE_SAVE_FAILED);
         }
     }
 }
