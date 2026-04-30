@@ -46,7 +46,7 @@ public class ClothesAiClient {
                     .body(BodyInserters.fromMultipartData(body))
                     .retrieve()
                     .bodyToMono(AiClothesPredictionResponse.class)
-                    .block();
+                    .block(Duration.ofSeconds(40));
 
         } catch (IOException e) {
             throw new IllegalArgumentException("AI 서버로 전달할 이미지 파일을 읽는 중 오류가 발생했습니다.");

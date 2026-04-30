@@ -23,7 +23,7 @@ public class S3StorageService {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    @Value("${cloud.aws.region.static}")
+    @Value("${cloud.aws.region}")
     private String region;
 
     public SavedImage uploadClothesImage(MultipartFile image) {
@@ -38,7 +38,7 @@ public class S3StorageService {
         validateImage(image);
 
         String originalFilename = image.getOriginalFilename();
-        String extension = getExtension(originalFilename);
+        String extension = getExtension(originalFilename, image.getContentType());
         String key = dirName + "/" + UUID.randomUUID() + extension;
 
         try {
@@ -89,21 +89,33 @@ public class S3StorageService {
         }
     }
 
-    private String getExtension(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return ".jpg";
-        }
+    private String getExtension(String filename, String contentType) {
+        if (filename != null && filename.contains(".")) {
+            String extension = filename.substring(filename.lastIndexOf(".")).toLowerCase();
 
-        String extension = filename.substring(filename.lastIndexOf(".")).toLowerCase();
+            if (extension.equals(".jpg")
+                    || extension.equals(".jpeg")
+                    || extension.equals(".png")
+                    || extension.equals(".webp")) {
+                return extension;
+            }
 
-        if (!extension.equals(".jpg")
-                && !extension.equals(".jpeg")
-                && !extension.equals(".png")
-                && !extension.equals(".webp")) {
             throw new IllegalArgumentException("허용되지 않는 이미지 확장자입니다.");
         }
 
-        return extension;
+        if ("image/jpeg".equals(contentType)) {
+            return ".jpg";
+        }
+
+        if ("image/png".equals(contentType)) {
+            return ".png";
+        }
+
+        if ("image/webp".equals(contentType)) {
+            return ".webp";
+        }
+
+        throw new IllegalArgumentException("이미지 확장자를 확인할 수 없습니다.");
     }
 
     @Getter

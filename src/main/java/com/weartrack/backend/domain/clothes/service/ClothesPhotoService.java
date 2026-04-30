@@ -59,7 +59,11 @@ public class ClothesPhotoService {
             );
 
         } catch (Exception e) {
-            s3StorageService.delete(savedImage.getKey());
+            try {
+                s3StorageService.delete(savedImage.getKey());
+            } catch (Exception cleanupException) {
+                e.addSuppressed(cleanupException);
+            }
             throw e;
         }
     }
