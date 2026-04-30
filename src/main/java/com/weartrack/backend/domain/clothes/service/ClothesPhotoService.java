@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
 
 @Service
@@ -20,17 +19,16 @@ import java.util.List;
 @Transactional
 public class ClothesPhotoService {
 
-    private final FileStorageService fileStorageService;
+    private final S3StorageService s3StorageService;
     private final ClothesAiClient clothesAiClient;
     private final ClothesPhotoRepository clothesPhotoRepository;
 
     public ClothesPhotoCreateResponse uploadAndAnalyze(Long memberId, MultipartFile image) {
 
-        FileStorageService.SavedFile savedFile = fileStorageService.save(image);
+        S3StorageService.SavedImage savedImage = s3StorageService.uploadClothesImage(image);
 
         try {
-            AiClothesPredictionResponse aiResult =
-                    clothesAiClient.predict(savedFile.getFile());
+            AiClothesPredictionResponse aiResult = clothesAiClient.predict(image);
 
             if (aiResult == null || aiResult.results() == null || aiResult.results().isEmpty()) {
                 throw new IllegalStateException("AI 분석 결과가 없습니다.");
@@ -44,7 +42,7 @@ public class ClothesPhotoService {
 
             ClothesPhoto clothesPhoto = ClothesPhoto.builder()
                     .memberId(memberId)
-                    .imageUrl(savedFile.getImageUrl())
+                    .imageUrl(savedImage.getImageUrl())
                     .analysisStatus(AnalysisStatus.SUCCESS)
                     .predictedCategory(predictedCategory)
                     .predictedColor(predictedColor)
@@ -61,14 +59,8 @@ public class ClothesPhotoService {
             );
 
         } catch (Exception e) {
-            deleteFileIfExists(savedFile.getFile());
+            s3StorageService.delete(savedImage.getKey());
             throw e;
-        }
-    }
-
-    private void deleteFileIfExists(File file) {
-        if (file != null && file.exists()) {
-            file.delete();
         }
     }
 }
