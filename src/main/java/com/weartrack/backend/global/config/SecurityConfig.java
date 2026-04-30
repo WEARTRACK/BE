@@ -26,7 +26,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Value("${app.cors.allowed-origins:http://localhost:3000,https://weartrack.co.kr}")
+    @Value("${app.cors.allowed-origins:http://localhost:3000,https://wear-track.com,https://weartrack.co.kr}")
     private List<String> allowedOrigins;
 
     /**

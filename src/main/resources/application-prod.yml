@@ -21,7 +21,7 @@ jwt:
 
 app:
   cors:
-    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,https://weartrack.co.kr}
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,https://wear-track.com,https://weartrack.co.kr}
 
 # OAuth 클라이언트 설정은 실행 환경의 환경변수에서 주입합니다.
 oauth:
