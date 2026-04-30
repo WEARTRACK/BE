@@ -43,3 +43,15 @@ oauth:
 
 file:
   upload-dir: uploads
+
+cloud:
+   aws:
+     region: ${AWS_REGION:ap-northeast-2}
+     s3:
+       bucket: ${AWS_S3_BUCKET}
+     credentials:
+       access-key: ${AWS_ACCESS_KEY}
+       secret-key: ${AWS_SECRET_KEY}
+
+ai:
+  base-url: ${AI_BASE_URL}
