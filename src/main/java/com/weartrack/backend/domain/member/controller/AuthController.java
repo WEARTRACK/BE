@@ -33,11 +33,10 @@ public class AuthController {
     @PostMapping("/api/auth/social/login")
     public ApiResponse<SocialLoginResDto> socialLogin(
             @Valid @RequestBody SocialLoginReqDto request,
-            HttpServletRequest httpRequest,
             HttpServletResponse httpResponse
     ) {
         try {
-            SocialLoginResDto response = authService.login(request, extractOAuthState(httpRequest));
+            SocialLoginResDto response = authService.login(request);
             return ApiResponse.success(response);
         } finally {
             expireOAuthStateCookie(httpResponse);
