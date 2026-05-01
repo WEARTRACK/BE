@@ -1,6 +1,7 @@
 package com.weartrack.backend.domain.member.service;
 
 import com.weartrack.backend.domain.member.constant.AuthProvider;
+import com.weartrack.backend.domain.member.dto.OAuthHandoffPayload;
 import com.weartrack.backend.domain.member.dto.SocialUserInfo;
 import com.weartrack.backend.domain.member.dto.request.SocialLoginReqDto;
 import com.weartrack.backend.domain.member.dto.response.SocialLoginResDto;
@@ -19,16 +20,32 @@ public class AuthService {
 
     private final Map<AuthProvider, SocialLoginProviderClient> providerClients;
     private final AuthLoginTransactionService authLoginTransactionService;
+    private final OAuthHandoffService oAuthHandoffService;
 
     public AuthService(
             List<SocialLoginProviderClient> providerClients,
-            AuthLoginTransactionService authLoginTransactionService
+            AuthLoginTransactionService authLoginTransactionService,
+            OAuthHandoffService oAuthHandoffService
     ) {
         this.providerClients = mapProviderClients(providerClients);
         this.authLoginTransactionService = authLoginTransactionService;
+        this.oAuthHandoffService = oAuthHandoffService;
     }
 
     public SocialLoginResDto login(SocialLoginReqDto request) {
+        if (StringUtils.hasText(request.handoffToken())) {
+            OAuthHandoffPayload handoffPayload = oAuthHandoffService.consume(request.provider(), request.handoffToken());
+            return loginInternal(
+                    handoffPayload.provider(),
+                    handoffPayload.authorizationCode(),
+                    handoffPayload.state()
+            );
+        }
+
+        if (!StringUtils.hasText(request.authorizationCode())) {
+            throw new GeneralException(AuthErrorCode.INVALID_SOCIAL_LOGIN_REQUEST);
+        }
+
         return loginInternal(request.provider(), request.authorizationCode(), request.state());
     }
 
