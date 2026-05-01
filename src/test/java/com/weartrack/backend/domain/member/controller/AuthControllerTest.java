@@ -76,6 +76,30 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("서버가 발급한 웹 state면 쿠키 검증 없이 로그인 처리를 완료한다.")
+    void kakaoWebManagedStateCallbackSuccess() throws Exception {
+        SocialLoginResDto response = new SocialLoginResDto(
+                10L,
+                null,
+                false,
+                "access-token",
+                "refresh-token"
+        );
+
+        given(oAuthStateService.consumeIfPresent(AuthProvider.KAKAO, "managed-web-state"))
+                .willReturn(java.util.Optional.of(new OAuthStatePayload(AuthProvider.KAKAO, AuthClientType.WEB)));
+        given(authService.login(eq(AuthProvider.KAKAO), eq("kakao-code"), eq("managed-web-state")))
+                .willReturn(response);
+
+        mockMvc.perform(get("/login/oauth2/code/kakao")
+                        .param("state", "managed-web-state")
+                        .param("code", "kakao-code"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.result.memberId").value(10L));
+    }
+
+    @Test
     @DisplayName("소셜 로그인 요청이 유효하면 ApiResponse 형식으로 응답한다.")
     void socialLoginSuccess() throws Exception {
         SocialLoginReqDto request = new SocialLoginReqDto(AuthProvider.KAKAO, "auth-code", "oauth-state", null);

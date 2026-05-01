@@ -29,6 +29,9 @@ public class OAuthStateService {
     }
 
     OAuthStateService(Duration ttl, Clock clock) {
+        if (ttl == null || ttl.isZero() || ttl.isNegative()) {
+            throw new IllegalArgumentException("app.oauth.state-ttl-seconds must be positive");
+        }
         this.ttl = ttl;
         this.clock = clock;
     }

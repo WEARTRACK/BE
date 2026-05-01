@@ -61,7 +61,8 @@ public class SocialOAuthAuthorizeService {
                     .queryParam("response_type", "code")
                     .queryParam("scope", googleScope)
                     .queryParam("state", state)
-                    .build(false)
+                    .build()
+                    .encode()
                     .toUri();
             case KAKAO -> UriComponentsBuilder.fromUriString(KAKAO_AUTHORIZE_URI)
                     .queryParam("client_id", kakaoClientId)
@@ -69,7 +70,8 @@ public class SocialOAuthAuthorizeService {
                     .queryParam("response_type", "code")
                     .queryParam("scope", kakaoScope)
                     .queryParam("state", state)
-                    .build(false)
+                    .build()
+                    .encode()
                     .toUri();
             case NAVER -> UriComponentsBuilder.fromUriString(NAVER_AUTHORIZE_URI)
                     .queryParam("client_id", naverClientId)
@@ -77,7 +79,8 @@ public class SocialOAuthAuthorizeService {
                     .queryParam("response_type", "code")
                     .queryParam("scope", naverScope)
                     .queryParam("state", state)
-                    .build(false)
+                    .build()
+                    .encode()
                     .toUri();
             default -> throw new GeneralException(AuthErrorCode.UNSUPPORTED_PROVIDER);
         };

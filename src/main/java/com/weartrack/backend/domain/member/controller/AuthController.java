@@ -129,6 +129,13 @@ public class AuthController {
                             .location(buildMobileCallbackUri(provider, handoffToken))
                             .build();
                 }
+
+                SocialLoginResDto response = authService.login(
+                        provider,
+                        code,
+                        state
+                );
+                return ResponseEntity.ok(ApiResponse.success(response));
             }
 
             SocialLoginResDto response = authService.login(

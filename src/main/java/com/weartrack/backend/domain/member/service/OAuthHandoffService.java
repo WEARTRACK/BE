@@ -27,6 +27,9 @@ public class OAuthHandoffService {
     }
 
     OAuthHandoffService(Duration ttl, Clock clock) {
+        if (ttl == null || ttl.isZero() || ttl.isNegative()) {
+            throw new IllegalArgumentException("app.oauth.mobile.handoff-ttl-seconds must be positive");
+        }
         this.ttl = ttl;
         this.clock = clock;
     }
