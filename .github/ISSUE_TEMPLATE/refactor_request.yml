@@ -1,13 +1,44 @@
-## 🎯 목적
-
-
-## 🛠 작업 항목
-- [ ]
-- [ ]
-- [ ]
-
-## 💡 참고사항
-- 
-
-## ✏️ 추후 해보고 싶은 것
--
+name: "♻️ 리팩토링"
+description: "기존 코드의 구조, 성능, 가독성을 개선할 때 작성합니다."
+title: "[REFACTOR] "
+labels: ["refactor"]
+body:
+  - type: textarea
+    id: purpose
+    attributes:
+      label: "🎯 목적"
+      description: "어떤 부분을 왜 리팩토링하는지(ex. 성능 개선, 가독성 향상 등) 적어주세요."
+    validations:
+      required: true
+      
+  - type: textarea
+    id: tasks
+    attributes:
+      label: "🛠 작업 항목"
+      description: "진행할 세부 리팩토링 작업 항목을 체크리스트로 관리하세요."
+      value: |
+        - [ ] 
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
+      
+  - type: textarea
+    id: reference
+    attributes:
+      label: "💡 참고사항"
+      description: "참고할 문서나 레퍼런스 코드가 있다면 적어주세요."
+      value: |
+        - 
+    validations:
+      required: false
+      
+  - type: textarea
+    id: future-plans
+    attributes:
+      label: "✏️ 추후 해보고 싶은 것"
+      description: "이번 리팩토링에는 포함되지 않지만, 나중에 추가로 개선해볼 만한 아이디어를 적어주세요."
+      value: |
+        - 
+    validations:
+      required: false

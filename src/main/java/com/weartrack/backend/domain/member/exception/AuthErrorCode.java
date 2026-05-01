@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 public enum AuthErrorCode implements BaseErrorCode {
     UNSUPPORTED_PROVIDER(HttpStatus.BAD_REQUEST, "AUTH_400_1", "Unsupported social provider."),
     INVALID_OAUTH_STATE(HttpStatus.BAD_REQUEST, "AUTH_400_2", "Invalid OAuth state."),
+    INVALID_SOCIAL_LOGIN_REQUEST(HttpStatus.BAD_REQUEST, "AUTH_400_3", "Invalid social login request."),
+    INVALID_OAUTH_HANDOFF(HttpStatus.BAD_REQUEST, "AUTH_400_4", "Invalid OAuth handoff token."),
     INVALID_SOCIAL_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_1", "Invalid social access token."),
     SOCIAL_USER_INFO_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH_401_2", "Failed to load social user information."),
     INVALID_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_3", "Invalid JWT token.");
