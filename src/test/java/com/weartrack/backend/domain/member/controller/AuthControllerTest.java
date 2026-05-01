@@ -58,10 +58,9 @@ class AuthControllerTest {
                 "refresh-token"
         );
 
-        given(authService.login(request, "oauth-state")).willReturn(response);
+        given(authService.login(request)).willReturn(response);
 
         mockMvc.perform(post("/api/auth/social/login")
-                        .cookie(new Cookie("oauth-login-state", "oauth-state"))
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -77,7 +76,6 @@ class AuthControllerTest {
         SocialLoginReqDto request = new SocialLoginReqDto(AuthProvider.KAKAO, "", "oauth-state");
 
         mockMvc.perform(post("/api/auth/social/login")
-                        .cookie(new Cookie("oauth-login-state", "oauth-state"))
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
