@@ -27,6 +27,11 @@ jwt:
 app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:https://wear-track.com,https://weartrack.co.kr}
+  oauth:
+    state-ttl-seconds: ${APP_OAUTH_STATE_TTL_SECONDS:300}
+    mobile:
+      callback-base-uri: ${APP_OAUTH_MOBILE_CALLBACK_BASE_URI:weartrack://auth/callback}
+      handoff-ttl-seconds: ${APP_OAUTH_MOBILE_HANDOFF_TTL_SECONDS:180}
 
 # OAuth 클라이언트 설정은 실행 환경의 환경변수에서 주입합니다.
 oauth:
@@ -37,14 +42,17 @@ oauth:
     client-id: ${GOOGLE_CLIENT_ID}
     client-secret: ${GOOGLE_CLIENT_SECRET}
     redirect-uri: ${GOOGLE_REDIRECT_URI}
+    scope: ${GOOGLE_AUTH_SCOPE:openid email profile}
   kakao:
     client-id: ${KAKAO_CLIENT_ID}
     client-secret: ${KAKAO_CLIENT_SECRET:}
     redirect-uri: ${KAKAO_REDIRECT_URI}
+    scope: ${KAKAO_AUTH_SCOPE:account_email}
   naver:
     client-id: ${NAVER_CLIENT_ID}
     client-secret: ${NAVER_CLIENT_SECRET}
     redirect-uri: ${NAVER_REDIRECT_URI}
+    scope: ${NAVER_AUTH_SCOPE:name email}
 
 file:
   upload-dir: uploads

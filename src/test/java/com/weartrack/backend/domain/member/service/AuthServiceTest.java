@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.weartrack.backend.domain.member.constant.AuthProvider;
+import com.weartrack.backend.domain.member.dto.OAuthHandoffPayload;
 import com.weartrack.backend.domain.member.dto.SocialUserInfo;
 import com.weartrack.backend.domain.member.dto.request.SocialLoginReqDto;
 import com.weartrack.backend.domain.member.dto.response.SocialLoginResDto;
@@ -29,6 +30,9 @@ class AuthServiceTest {
     @Mock
     private AuthLoginTransactionService authLoginTransactionService;
 
+    @Mock
+    private OAuthHandoffService oAuthHandoffService;
+
     private AuthService authService;
 
     @BeforeEach
@@ -36,7 +40,8 @@ class AuthServiceTest {
         given(socialLoginProviderClient.supports()).willReturn(AuthProvider.KAKAO);
         authService = new AuthService(
                 List.of(socialLoginProviderClient),
-                authLoginTransactionService
+                authLoginTransactionService,
+                oAuthHandoffService
         );
     }
 
@@ -60,7 +65,7 @@ class AuthServiceTest {
         given(authLoginTransactionService.loginOrRegister(socialUserInfo)).willReturn(expectedResponse);
 
         SocialLoginResDto response = authService.login(
-                new SocialLoginReqDto(AuthProvider.KAKAO, "auth-code", "oauth-state")
+                new SocialLoginReqDto(AuthProvider.KAKAO, "auth-code", "oauth-state", null)
         );
 
         assertThat(response.memberId()).isEqualTo(1L);
@@ -90,7 +95,7 @@ class AuthServiceTest {
         given(authLoginTransactionService.loginOrRegister(socialUserInfo)).willReturn(expectedResponse);
 
         SocialLoginResDto response = authService.login(
-                new SocialLoginReqDto(AuthProvider.KAKAO, "new-auth-code", "oauth-state")
+                new SocialLoginReqDto(AuthProvider.KAKAO, "new-auth-code", "oauth-state", null)
         );
 
         assertThat(response.memberId()).isEqualTo(2L);
@@ -133,12 +138,42 @@ class AuthServiceTest {
     @Test
     @DisplayName("지원하지 않는 provider면 외부 호출 전에 예외를 던진다.")
     void loginFailsWhenProviderUnsupported() {
-        SocialLoginReqDto request = new SocialLoginReqDto(AuthProvider.GOOGLE, "auth-code", "oauth-state");
+        SocialLoginReqDto request = new SocialLoginReqDto(AuthProvider.GOOGLE, "auth-code", "oauth-state", null);
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(GeneralException.class);
 
         verify(socialLoginProviderClient, never()).getUserInfo(any(), any());
         verify(authLoginTransactionService, never()).loginOrRegister(any());
+    }
+
+    @Test
+    @DisplayName("handoff token 로그인 요청이면 저장된 code/state로 provider 조회를 진행한다.")
+    void loginWithHandoffToken() {
+        SocialUserInfo socialUserInfo = new SocialUserInfo(
+                AuthProvider.KAKAO,
+                "provider-user-id",
+                "weartrack@example.com"
+        );
+        SocialLoginResDto expectedResponse = new SocialLoginResDto(
+                4L,
+                null,
+                false,
+                "access-token",
+                "refresh-token"
+        );
+
+        given(oAuthHandoffService.consume(AuthProvider.KAKAO, "handoff-token"))
+                .willReturn(new OAuthHandoffPayload(AuthProvider.KAKAO, "auth-code", "server-state"));
+        given(socialLoginProviderClient.getUserInfo("auth-code", "server-state")).willReturn(socialUserInfo);
+        given(authLoginTransactionService.loginOrRegister(socialUserInfo)).willReturn(expectedResponse);
+
+        SocialLoginResDto response = authService.login(
+                new SocialLoginReqDto(AuthProvider.KAKAO, null, null, "handoff-token")
+        );
+
+        assertThat(response.memberId()).isEqualTo(4L);
+        verify(oAuthHandoffService).consume(AuthProvider.KAKAO, "handoff-token");
+        verify(authLoginTransactionService).loginOrRegister(socialUserInfo);
     }
 }
