@@ -23,7 +23,7 @@ public class S3StorageService {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    @Value("${cloud.aws.region.static}")
+    @Value("${cloud.aws.region}")
     private String region;
 
     public SavedImage uploadClothesImage(MultipartFile image) {
