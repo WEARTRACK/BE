@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ public class OAuthStateService {
     private final Duration ttl;
     private final Clock clock;
 
+    @Autowired
     public OAuthStateService(
             @Value("${app.oauth.state-ttl-seconds:300}") long stateTtlSeconds
     ) {

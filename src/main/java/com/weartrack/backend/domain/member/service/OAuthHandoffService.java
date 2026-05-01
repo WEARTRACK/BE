@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ public class OAuthHandoffService {
     private final Duration ttl;
     private final Clock clock;
 
+    @Autowired
     public OAuthHandoffService(
             @Value("${app.oauth.mobile.handoff-ttl-seconds:180}") long handoffTtlSeconds
     ) {
