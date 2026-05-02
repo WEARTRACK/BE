@@ -16,9 +16,10 @@ import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
 import com.weartrack.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Comparator;
 import java.util.List;
 
@@ -119,7 +120,7 @@ public class ClosetService {
     }
 
     //옷장의 특정 칸에 해당하는 옷 리스트를 조회하는 API
-    public ClothesListResDto getClothesBySection(Long memberId, Long closetId, Long sectionId){
+    public ClothesListResDto getClothesBySection(Long memberId, Long closetId, Long sectionId, Pageable pageable){
         Closet closet = closetRepository.findById(closetId).
                 orElseThrow(() -> new GeneralException(ClosetErrorCode.CLOSET_NOT_FOUND));
 
@@ -129,8 +130,8 @@ public class ClosetService {
         if (!section.getCloset().getClosetId().equals(closetId)) {
             throw new GeneralException(ClosetErrorCode.SECTION_NOT_IN_CLOSET);
         }
-        List<Clothes> clothesList = clothesRepository.findByClosetSectionIdOrderByCreatedAtDesc(sectionId);
+        Page<Clothes> page = clothesRepository.findByClosetSectionIdOrderByCreatedAtDesc(sectionId,pageable);
 
-        return ClothesListResDto.from(section, clothesList);
+        return ClothesListResDto.from(section, page);
     }
 }

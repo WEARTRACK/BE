@@ -2,8 +2,8 @@ package com.weartrack.backend.domain.clothes.repository;
 
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import java.time.LocalDateTime;
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,5 +30,5 @@ public interface ClothesRepository extends JpaRepository<Clothes, Long> {
             @Param("startDate") LocalDateTime startDate
     );
 
-    List<Clothes> findByClosetSectionIdOrderByCreatedAtDesc(Long closetSectionId);
+    Page<Clothes> findByClosetSectionIdOrderByCreatedAtDesc(Long closetSectionId, Pageable pageable);
 }

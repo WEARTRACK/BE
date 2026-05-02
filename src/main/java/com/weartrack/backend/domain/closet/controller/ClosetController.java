@@ -12,6 +12,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -67,10 +70,11 @@ public class ClosetController {
     @GetMapping("/{closetId}/sections/{sectionId}/clothes")
     public ApiResponse<ClothesListResDto> getClothesList(
             @AuthenticationPrincipal JwtPrincipal principal,
-            @Valid @PathVariable Long closetId, @PathVariable Long sectionId
+            @Valid @PathVariable Long closetId, @PathVariable Long sectionId,
+            @PageableDefault(size = 4, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ){
         ClothesListResDto response = closetService.getClothesBySection(
-                principal.memberId(), closetId, sectionId
+                principal.memberId(), closetId, sectionId, pageable
         );
 
         return ApiResponse.success(response);
