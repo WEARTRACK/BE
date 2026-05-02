@@ -14,26 +14,5 @@ public record ClosetStatisticsDto(
             String category,
             Integer count
     ) {
-        public static CategoryStatistics of(String category, int count) {
-
-            return new CategoryStatistics(category, count);
-        }
-    }
-
-    public static ClosetStatisticsDto from(List<Clothes> clothesList) {
-        int totalCount = clothesList.size();
-
-        Map<String, Long> countByCategory = clothesList.stream()
-                .collect(Collectors.groupingBy(
-                        Clothes::getCategory,
-                        Collectors.counting()
-                ));
-
-        List<CategoryStatistics> stats = countByCategory.entrySet().stream()
-                .map(e -> CategoryStatistics.of(e.getKey(), e.getValue().intValue()))
-                .sorted((a, b) -> b.count().compareTo(a.count()))
-                .toList();
-
-        return new ClosetStatisticsDto(totalCount, stats);
     }
 }

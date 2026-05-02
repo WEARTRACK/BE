@@ -10,6 +10,7 @@ import com.weartrack.backend.domain.closet.entity.Closet;
 import com.weartrack.backend.domain.closet.entity.ClosetSection;
 import com.weartrack.backend.domain.closet.entity.ClosetTemplate;
 import com.weartrack.backend.domain.closet.exception.ClosetErrorCode;
+import com.weartrack.backend.domain.closet.mapper.ClosetStatisticsMapper;
 import com.weartrack.backend.domain.closet.repository.ClosetRepository;
 import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesListResDto;
@@ -34,6 +35,7 @@ public class ClosetService {
     private final ClosetRepository closetRepository;
     private final ClosetSectionRepository sectionRepository;
     private final ClothesRepository clothesRepository;
+    private final ClosetStatisticsMapper closetStatisticsMapper;
 
     public ClosetCreateResDto createCloset(Long memberId, ClosetCreateReqDto request) {
         ClosetTemplate template = ClosetTemplate.from(request.templateId());
@@ -129,9 +131,10 @@ public class ClosetService {
     public ClosetStatisticsDto getStatistics(Long memberId, Long closetId){
         findClosetWithOwnershipCheck(memberId, closetId);
         List<Clothes> clothesList = clothesRepository.findAllByClosetId(closetId);
-        return ClosetStatisticsDto.from(clothesList);
+        return closetStatisticsMapper.toStatistics(clothesList);
     }
 
+    // 해당 사용자의 옷장인지 확인
     private Closet findClosetWithOwnershipCheck(Long memberId, Long closetId) {
         Closet closet = closetRepository.findById(closetId)
                 .orElseThrow(() -> new GeneralException(ClosetErrorCode.CLOSET_NOT_FOUND));
@@ -142,6 +145,7 @@ public class ClosetService {
         return closet;
     }
 
+    // 칸 수 일치확인
     private void validateSectionCount(Closet closet) {
         ClosetTemplate template = ClosetTemplate.from(closet.getTemplateId());
         int actual = closet.getSections().size();
