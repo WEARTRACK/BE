@@ -1,7 +1,8 @@
 package com.weartrack.backend.domain.closet.controller;
 
-import com.weartrack.backend.domain.closet.dto.ClosetCreateReqDto;
-import com.weartrack.backend.domain.closet.dto.ClosetCreateResDto;
+import com.weartrack.backend.domain.closet.dto.request.ClosetCreateReqDto;
+import com.weartrack.backend.domain.closet.dto.response.ClosetCreateResDto;
+import com.weartrack.backend.domain.closet.dto.response.ClosetInquireResDto;
 import com.weartrack.backend.domain.closet.service.ClosetService;
 import com.weartrack.backend.global.response.ApiResponse;
 import com.weartrack.backend.global.security.JwtPrincipal;
@@ -36,6 +37,21 @@ public class ClosetController {
                 principal.memberId(),
                 request
         );
+
+        return ApiResponse.success(response);
+    }
+
+    @Operation(
+            summary = "디지털 옷장 조회",
+            description = "closetId을 입력하여, 내 옷장을 조회"
+    )
+    @GetMapping("/{closetId}")
+    public ApiResponse<ClosetInquireResDto> getCloset(
+            @AuthenticationPrincipal JwtPrincipal principal,
+            @Valid @PathVariable Long closetId
+            ){
+        ClosetInquireResDto  response = closetService.getCloset(
+                principal.memberId(), closetId);
 
         return ApiResponse.success(response);
     }

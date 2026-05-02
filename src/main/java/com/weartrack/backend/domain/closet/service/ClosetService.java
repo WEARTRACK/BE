@@ -1,6 +1,10 @@
 package com.weartrack.backend.domain.closet.service;
 
-import com.weartrack.backend.domain.closet.dto.*;
+import com.weartrack.backend.domain.closet.dto.request.ClosetCreateReqDto;
+import com.weartrack.backend.domain.closet.dto.request.ClosetSectionCreateReqDto;
+import com.weartrack.backend.domain.closet.dto.response.ClosetCreateResDto;
+import com.weartrack.backend.domain.closet.dto.response.ClosetInquireResDto;
+import com.weartrack.backend.domain.closet.dto.response.ClosetSectionResDto;
 import com.weartrack.backend.domain.closet.entity.Closet;
 import com.weartrack.backend.domain.closet.entity.ClosetSection;
 import com.weartrack.backend.domain.closet.entity.ClosetTemplate;
@@ -85,6 +89,26 @@ public class ClosetService {
 
         if (!sectionOrders.equals(validOrders)) {
             throw new GeneralException(ClosetErrorCode.INVALID_SECTION_ORDER);
+        }
+    }
+
+    //내 옷장 조회하는 API
+    public ClosetInquireResDto getCloset(Long memberId, Long closetId) {
+        Closet closet = closetRepository.findById(closetId).
+                orElseThrow(() -> new GeneralException(ClosetErrorCode.CLOSET_NOT_FOUND));
+
+        validateSectionCount(closet);
+
+        return ClosetInquireResDto.from(closet);
+    }
+
+    private void validateSectionCount(Closet closet) {
+        ClosetTemplate template = ClosetTemplate.from(closet.getTemplateId());
+        int actual = closet.getSections().size();
+        int expected = template.getSectionCount();
+
+        if (actual != expected) {
+          throw new GeneralException(ClosetErrorCode.SECTION_COUNT_MISMATCH);
         }
     }
 }

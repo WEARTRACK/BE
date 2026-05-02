@@ -1,6 +1,6 @@
 package com.weartrack.backend.domain.closet.service;
 
-import com.weartrack.backend.domain.closet.dto.ClosetPhotoCreateResDto;
+import com.weartrack.backend.domain.closet.dto.response.ClosetPhotoCreateResDto;
 import com.weartrack.backend.domain.closet.dto.PredictedSectionDto;
 import com.weartrack.backend.domain.closet.entity.ClosetTemplate;
 import com.weartrack.backend.domain.clothes.service.FileStorageService;

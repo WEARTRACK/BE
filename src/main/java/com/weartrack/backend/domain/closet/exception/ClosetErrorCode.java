@@ -14,6 +14,10 @@ public enum ClosetErrorCode implements BaseErrorCode {
     EMPTY_SECTION_NAME("CLOSET_4003", "칸 이름을 모두 입력해주세요.", HttpStatus.BAD_REQUEST),
     INVALID_IMAGE("CLOSET_4004", "옷장 이미지는 필수입니다.", HttpStatus.BAD_REQUEST),
     INVALID_SECTION_ORDER("CLOSET_4005", "템플릿의 칸 순서가 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
+    CLOSET_NOT_FOUND("CLOSET_4006", "등록한 옷장을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    SECTION_COUNT_MISMATCH("CLOSET_4007", "템플릿의 칸 개수가 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
+    SECTION_FULL("CLOEST_4008", "칸의 자리가 없습니다.", HttpStatus.BAD_REQUEST),
+    SECTION_NOT_FOUND("CLOSET_4007","해당 칸 수를 찾을 수 업습니다.",HttpStatus.NOT_FOUND),
     CLOSET_IMAGE_SAVE_FAILED("CLOSET_5001", "옷장 이미지 저장 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String code;
