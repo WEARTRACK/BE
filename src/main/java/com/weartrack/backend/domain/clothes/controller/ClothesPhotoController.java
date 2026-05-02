@@ -1,6 +1,6 @@
 package com.weartrack.backend.domain.clothes.controller;
 
-import com.weartrack.backend.domain.clothes.dto.ClothesPhotoCreateResponse;
+import com.weartrack.backend.domain.clothes.dto.response.ClothesPhotoCreateResponse;
 import com.weartrack.backend.domain.clothes.service.ClothesPhotoService;
 import com.weartrack.backend.global.response.ApiResponse;
 import com.weartrack.backend.global.security.JwtPrincipal;
@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;

@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.clothes.dto;
+package com.weartrack.backend.domain.clothes.dto.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

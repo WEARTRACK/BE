@@ -1,7 +1,7 @@
 package com.weartrack.backend.domain.clothes.controller;
 
-import com.weartrack.backend.domain.clothes.dto.ClothesCreateRequest;
-import com.weartrack.backend.domain.clothes.dto.ClothesCreateResponse;
+import com.weartrack.backend.domain.clothes.dto.request.ClothesCreateRequest;
+import com.weartrack.backend.domain.clothes.dto.response.ClothesCreateResponse;
 import com.weartrack.backend.domain.clothes.service.ClothesService;
 import com.weartrack.backend.global.response.ApiResponse;
 import com.weartrack.backend.global.security.JwtPrincipal;

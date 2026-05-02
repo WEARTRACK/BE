@@ -1,6 +1,6 @@
 package com.weartrack.backend.domain.clothes.service;
 
-import com.weartrack.backend.domain.clothes.dto.AiClothesPredictionResponse;
+import com.weartrack.backend.domain.clothes.dto.response.AiClothesPredictionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;

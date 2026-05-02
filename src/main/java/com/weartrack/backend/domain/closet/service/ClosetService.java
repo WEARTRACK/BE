@@ -10,6 +10,10 @@ import com.weartrack.backend.domain.closet.entity.ClosetSection;
 import com.weartrack.backend.domain.closet.entity.ClosetTemplate;
 import com.weartrack.backend.domain.closet.exception.ClosetErrorCode;
 import com.weartrack.backend.domain.closet.repository.ClosetRepository;
+import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
+import com.weartrack.backend.domain.clothes.dto.response.ClothesListResDto;
+import com.weartrack.backend.domain.clothes.entity.Clothes;
+import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
 import com.weartrack.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +28,8 @@ import java.util.List;
 public class ClosetService {
 
     private final ClosetRepository closetRepository;
+    private final ClosetSectionRepository sectionRepository;
+    private final ClothesRepository clothesRepository;
 
     public ClosetCreateResDto createCloset(Long memberId, ClosetCreateReqDto request) {
         ClosetTemplate template = ClosetTemplate.from(request.templateId());
@@ -110,5 +116,21 @@ public class ClosetService {
         if (actual != expected) {
           throw new GeneralException(ClosetErrorCode.SECTION_COUNT_MISMATCH);
         }
+    }
+
+    //옷장의 특정 칸에 해당하는 옷 리스트를 조회하는 API
+    public ClothesListResDto getClothesBySection(Long memberId, Long closetId, Long sectionId){
+        Closet closet = closetRepository.findById(closetId).
+                orElseThrow(() -> new GeneralException(ClosetErrorCode.CLOSET_NOT_FOUND));
+
+        ClosetSection section = sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
+
+        if (!section.getCloset().getClosetId().equals(closetId)) {
+            throw new GeneralException(ClosetErrorCode.SECTION_NOT_IN_CLOSET);
+        }
+        List<Clothes> clothesList = clothesRepository.findByClosetSectionIdOrderByCreatedAtDesc(sectionId);
+
+        return ClothesListResDto.from(section, clothesList);
     }
 }

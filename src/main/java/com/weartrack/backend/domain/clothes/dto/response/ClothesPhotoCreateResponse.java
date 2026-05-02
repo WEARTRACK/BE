@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.clothes.dto;
+package com.weartrack.backend.domain.clothes.dto.response;
 
 import com.weartrack.backend.domain.clothes.entity.AnalysisStatus;
 
