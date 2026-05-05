@@ -35,8 +35,6 @@ public class ClothesService {
         ClosetSection section = closetSectionRepository.findById(request.sectionId())
                 .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
 
-        section.increaseClothesCount();
-
         Clothes clothes = Clothes.builder()
                 .clothesPhotoId(clothesPhoto.getId())
                 .closetSectionId(request.sectionId())
@@ -47,6 +45,7 @@ public class ClothesService {
                 .build();
 
         Clothes savedClothes = clothesRepository.save(clothes);
+        section.increaseClothesCount();
 
         return new ClothesCreateResponse(
                 savedClothes.getId(),
