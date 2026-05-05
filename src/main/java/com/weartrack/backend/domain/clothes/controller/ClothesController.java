@@ -1,7 +1,9 @@
 package com.weartrack.backend.domain.clothes.controller;
 
 import com.weartrack.backend.domain.clothes.dto.request.ClothesCreateRequest;
+import com.weartrack.backend.domain.clothes.dto.request.ClothesUpdateRequest;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesCreateResponse;
+import com.weartrack.backend.domain.clothes.dto.response.ClothesDetailResDto;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesFilterResDto;
 import com.weartrack.backend.domain.clothes.service.ClothesService;
 import com.weartrack.backend.global.response.ApiResponse;
@@ -45,7 +47,7 @@ public class ClothesController {
 
     @Operation(
             summary = "옷 필터 검색",
-            description = "색상 또는 카테고리로 옷 검색. 둘 중 하나만 보내거나 둘 다 보낼 수 있음."
+            description = "색상 또는 카테고리로 옷 검색. 둘 중 하나만 보냅니다.."
     )
     @GetMapping("/filter")
     public ApiResponse<ClothesFilterResDto> filterClothes(
@@ -57,6 +59,35 @@ public class ClothesController {
     ) {
         return ApiResponse.success(
                 clothesService.filterClothes(principal.memberId(), color, category, pageable)
+        );
+    }
+
+    @Operation(
+            summary = "옷 상세 조회",
+            description = "clothesId로 옷의 상세 정보를 조회합니다."
+    )
+    @GetMapping("/{clothesId}")
+    public ApiResponse<ClothesDetailResDto> getClothesDetail(
+            @AuthenticationPrincipal JwtPrincipal principal,
+            @PathVariable Long clothesId
+    ) {
+        return ApiResponse.success(
+                clothesService.getClothesDetail(principal.memberId(), clothesId)
+        );
+    }
+
+    @Operation(
+            summary = "옷 정보 수정",
+            description = "옷의 색상, 카테고리, 가격, 섹션을 수정합니다. 변경하지 않을 필드는 null로 보내면 됩니다."
+    )
+    @PatchMapping("/{clothesId}")
+    public ApiResponse<ClothesDetailResDto> updateClothes(
+            @AuthenticationPrincipal JwtPrincipal principal,
+            @PathVariable Long clothesId,
+            @RequestBody ClothesUpdateRequest request
+    ) {
+        return ApiResponse.success(
+                clothesService.updateClothes(principal.memberId(), clothesId, request)
         );
     }
 }

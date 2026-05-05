@@ -52,4 +52,28 @@ public class Clothes {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void updateColor(String color) {
+        if (color != null && !color.isBlank()) {
+            this.color = color;
+        }
+    }
+
+    public void updateCategory(String category) {
+        if (category != null && !category.isBlank()) {
+            this.category = category;
+        }
+    }
+
+    public void updatePrice(Integer price) {
+        if (price != null && price >= 0) {
+            this.price = price;
+        }
+    }
+
+    public void moveToSection(Long sectionId) {
+        if (sectionId != null) {
+            this.closetSectionId = sectionId;
+        }
+    }
 }

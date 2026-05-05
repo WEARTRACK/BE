@@ -1,13 +1,17 @@
 package com.weartrack.backend.domain.clothes.service;
 
+import com.weartrack.backend.domain.closet.entity.Closet;
 import com.weartrack.backend.domain.closet.entity.ClosetSection;
 import com.weartrack.backend.domain.closet.exception.ClosetErrorCode;
 import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
 import com.weartrack.backend.domain.clothes.dto.request.ClothesCreateRequest;
+import com.weartrack.backend.domain.clothes.dto.request.ClothesUpdateRequest;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesCreateResponse;
+import com.weartrack.backend.domain.clothes.dto.response.ClothesDetailResDto;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesFilterResDto;
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;
+import com.weartrack.backend.domain.clothes.exception.ClothesErrorCode;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
 import com.weartrack.backend.global.exception.GeneralException;
@@ -68,6 +72,7 @@ public class ClothesService {
     }
 
 
+    // 색상별, 카테고리별 필터링
     public ClothesFilterResDto filterClothes(
             Long memberId, String color, String category, Pageable pageable) {
 
@@ -87,5 +92,67 @@ public class ClothesService {
                 ));
 
         return ClothesFilterResDto.from(page, sectionNameMap);
+    }
+
+
+    // 옷 상세정보 조회
+    public ClothesDetailResDto getClothesDetail(Long memberId, Long clothesId) {
+
+        Clothes clothes = clothesRepository.findById(clothesId)
+                .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
+
+        ClosetSection section = closetSectionRepository.findById(clothes.getClosetSectionId())
+                .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
+
+        if (!section.getCloset().getMemberId().equals(memberId)) {
+            throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
+        }
+
+        return ClothesDetailResDto.from(clothes, section);
+    }
+
+
+    // 옷 정보 수정
+    public ClothesDetailResDto updateClothes(
+            Long memberId, Long clothesId, ClothesUpdateRequest request) {
+
+        Clothes clothes = clothesRepository.findById(clothesId)
+                .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
+
+        ClosetSection currentSection = closetSectionRepository.findById(clothes.getClosetSectionId())
+                .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
+
+        Closet closet = currentSection.getCloset();
+        if (!closet.getMemberId().equals(memberId)) {
+            throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
+        }
+
+        clothes.updateColor(request.color());
+        clothes.updateCategory(request.category());
+        clothes.updatePrice(request.price());
+
+        ClosetSection finalSection = currentSection;
+        if (request.sectionId() != null && !request.sectionId().equals(currentSection.getSectionId())) {
+            finalSection = moveClothesToSection(clothes, currentSection, request.sectionId(), memberId);
+        }
+
+        return ClothesDetailResDto.from(clothes, finalSection);
+    }
+
+    private ClosetSection moveClothesToSection(
+            Clothes clothes, ClosetSection currentSection, Long targetSectionId, Long memberId) {
+
+        ClosetSection targetSection = closetSectionRepository.findById(targetSectionId)
+                .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
+
+        if (!targetSection.getCloset().getMemberId().equals(memberId)) {
+            throw new GeneralException(ClosetErrorCode.SECTION_NOT_OWNED);
+        }
+
+        currentSection.decreaseClothesCount();
+        targetSection.increaseClothesCount();
+        clothes.moveToSection(targetSectionId);
+
+        return targetSection;
     }
 }
