@@ -29,10 +29,14 @@ public class ClosetSection {
     @Column(name = "section_name", nullable = false, length = 30)
     private String sectionName;
 
-    @Column(name = "clothes_count")
-    @Max(25)
-    private Integer clothesCount = 0;
+    @Version
+    @Column(name = "version", nullable = false)
+    @Builder.Default
+    private Long version = 0L;
 
+    @Column(name = "clothes_count", nullable = false)
+    @Builder.Default
+    private Integer clothesCount = 0;
 
     public void setCloset(Closet closet) {
         this.closet = closet;

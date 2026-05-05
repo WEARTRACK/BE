@@ -28,12 +28,14 @@ public class ClothesService {
         ClothesPhoto clothesPhoto = clothesPhotoRepository.findById(request.photoId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 옷 사진입니다."));
 
-        ClosetSection section = closetSectionRepository.findById(request.sectionId())
-                .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
-
         if (!clothesPhoto.getMemberId().equals(memberId)) {
             throw new IllegalArgumentException("본인이 업로드한 옷 사진만 등록할 수 있습니다.");
         }
+
+        ClosetSection section = closetSectionRepository.findById(request.sectionId())
+                .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
+
+        section.increaseClothesCount();
 
         Clothes clothes = Clothes.builder()
                 .clothesPhotoId(clothesPhoto.getId())
@@ -45,8 +47,6 @@ public class ClothesService {
                 .build();
 
         Clothes savedClothes = clothesRepository.save(clothes);
-
-        section.increaseClothesCount();
 
         return new ClothesCreateResponse(
                 savedClothes.getId(),
