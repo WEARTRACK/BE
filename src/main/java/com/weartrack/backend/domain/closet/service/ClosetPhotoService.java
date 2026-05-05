@@ -3,7 +3,7 @@ package com.weartrack.backend.domain.closet.service;
 import com.weartrack.backend.domain.closet.dto.response.ClosetPhotoCreateResDto;
 import com.weartrack.backend.domain.closet.dto.PredictedSectionDto;
 import com.weartrack.backend.domain.closet.entity.ClosetTemplate;
-import com.weartrack.backend.domain.clothes.service.FileStorageService;
+import com.weartrack.backend.domain.clothes.service.S3StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,13 +14,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ClosetPhotoService {
 
-    private final FileStorageService fileStorageService;
+    private final S3StorageService s3StorageService;
 
     public ClosetPhotoCreateResDto uploadClosetPhoto(Long memberId, Integer templateId, MultipartFile image) {
-        // TODO: S3 이미지 저장 및 옷장 사진 이력 저장 시 memberId 사용 예정
         ClosetTemplate template = ClosetTemplate.from(templateId);
 
-        FileStorageService.SavedFile savedFile = fileStorageService.saveCloset(image);
+        S3StorageService.SavedImage savedImage = s3StorageService.uploadClosetImage(image);
 
         List<PredictedSectionDto> predictedSections = template.getSectionOrders()
                 .stream()
@@ -30,7 +29,7 @@ public class ClosetPhotoService {
         return new ClosetPhotoCreateResDto(
                 "SUCCESS",
                 template.getTemplateId(),
-                savedFile.getImageUrl(),
+                savedImage.getImageUrl(),
                 template.getSectionCount(),
                 predictedSections
         );
