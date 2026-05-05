@@ -5,10 +5,12 @@ import com.weartrack.backend.domain.closet.dto.request.ClosetSectionCreateReqDto
 import com.weartrack.backend.domain.closet.dto.response.ClosetCreateResDto;
 import com.weartrack.backend.domain.closet.dto.response.ClosetInquireResDto;
 import com.weartrack.backend.domain.closet.dto.response.ClosetSectionResDto;
+import com.weartrack.backend.domain.closet.dto.response.ClosetStatisticsDto;
 import com.weartrack.backend.domain.closet.entity.Closet;
 import com.weartrack.backend.domain.closet.entity.ClosetSection;
 import com.weartrack.backend.domain.closet.entity.ClosetTemplate;
 import com.weartrack.backend.domain.closet.exception.ClosetErrorCode;
+import com.weartrack.backend.domain.closet.mapper.ClosetStatisticsMapper;
 import com.weartrack.backend.domain.closet.repository.ClosetRepository;
 import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesListResDto;
@@ -16,6 +18,7 @@ import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
 import com.weartrack.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -31,6 +35,7 @@ public class ClosetService {
     private final ClosetRepository closetRepository;
     private final ClosetSectionRepository sectionRepository;
     private final ClothesRepository clothesRepository;
+    private final ClosetStatisticsMapper closetStatisticsMapper;
 
     public ClosetCreateResDto createCloset(Long memberId, ClosetCreateReqDto request) {
         ClosetTemplate template = ClosetTemplate.from(request.templateId());
@@ -101,28 +106,15 @@ public class ClosetService {
 
     //내 옷장 조회하는 API
     public ClosetInquireResDto getCloset(Long memberId, Long closetId) {
-        Closet closet = closetRepository.findById(closetId).
-                orElseThrow(() -> new GeneralException(ClosetErrorCode.CLOSET_NOT_FOUND));
-
+        Closet closet = findClosetWithOwnershipCheck(memberId, closetId);
         validateSectionCount(closet);
-
         return ClosetInquireResDto.from(closet);
-    }
-
-    private void validateSectionCount(Closet closet) {
-        ClosetTemplate template = ClosetTemplate.from(closet.getTemplateId());
-        int actual = closet.getSections().size();
-        int expected = template.getSectionCount();
-
-        if (actual != expected) {
-          throw new GeneralException(ClosetErrorCode.SECTION_COUNT_MISMATCH);
-        }
     }
 
     //옷장의 특정 칸에 해당하는 옷 리스트를 조회하는 API
     public ClothesListResDto getClothesBySection(Long memberId, Long closetId, Long sectionId, Pageable pageable){
-        Closet closet = closetRepository.findById(closetId).
-                orElseThrow(() -> new GeneralException(ClosetErrorCode.CLOSET_NOT_FOUND));
+
+        findClosetWithOwnershipCheck(memberId, closetId);
 
         ClosetSection section = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
@@ -133,5 +125,35 @@ public class ClosetService {
         Page<Clothes> page = clothesRepository.findByClosetSectionIdOrderByCreatedAtDesc(sectionId,pageable);
 
         return ClothesListResDto.from(section, page);
+    }
+
+    // 통계 조회하는 API
+    public ClosetStatisticsDto getStatistics(Long memberId, Long closetId){
+        findClosetWithOwnershipCheck(memberId, closetId);
+        List<Clothes> clothesList = clothesRepository.findAllByClosetId(closetId);
+        return closetStatisticsMapper.toStatistics(clothesList);
+    }
+
+    // 해당 사용자의 옷장인지 확인
+    private Closet findClosetWithOwnershipCheck(Long memberId, Long closetId) {
+        Closet closet = closetRepository.findById(closetId)
+                .orElseThrow(() -> new GeneralException(ClosetErrorCode.CLOSET_NOT_FOUND));
+
+        if (!closet.getMemberId().equals(memberId)) {
+            throw new GeneralException(ClosetErrorCode.CLOSET_NOT_OWNED);
+        }
+        return closet;
+    }
+
+    // 칸 수 일치확인
+    private void validateSectionCount(Closet closet) {
+        ClosetTemplate template = ClosetTemplate.from(closet.getTemplateId());
+        int actual = closet.getSections().size();
+        int expected = template.getSectionCount();
+
+        if (actual != expected) {
+            log.warn("칸의 수가 불일치합니다. closetId={}, expected={}, actual={}",
+                    closet.getClosetId(), expected, actual);
+        }
     }
 }

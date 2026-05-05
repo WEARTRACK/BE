@@ -3,6 +3,7 @@ package com.weartrack.backend.domain.closet.controller;
 import com.weartrack.backend.domain.closet.dto.request.ClosetCreateReqDto;
 import com.weartrack.backend.domain.closet.dto.response.ClosetCreateResDto;
 import com.weartrack.backend.domain.closet.dto.response.ClosetInquireResDto;
+import com.weartrack.backend.domain.closet.dto.response.ClosetStatisticsDto;
 import com.weartrack.backend.domain.closet.service.ClosetService;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesListResDto;
 import com.weartrack.backend.domain.clothes.service.ClothesService;
@@ -49,7 +50,7 @@ public class ClosetController {
 
     @Operation(
             summary = "디지털 옷장 조회",
-            description = "closetId을 입력하여, 내 옷장을 조회"
+            description = "closetId을 입력하여 내 옷장을 조회"
     )
     @GetMapping("/{closetId}")
     public ApiResponse<ClosetInquireResDto> getCloset(
@@ -78,5 +79,18 @@ public class ClosetController {
         );
 
         return ApiResponse.success(response);
+    }
+
+
+    @Operation(
+            summary = "옷장 통계 조회",
+            description = "closetId을 입력하여 옷장의 통계를 조회"
+    )
+    @GetMapping("/{closetId}/statistics")
+    public ApiResponse<ClosetStatisticsDto> getStatistics(
+            @AuthenticationPrincipal JwtPrincipal principal,
+            @Valid @PathVariable Long closetId
+    ){
+        return ApiResponse.success(closetService.getStatistics(principal.memberId(), closetId));
     }
 }

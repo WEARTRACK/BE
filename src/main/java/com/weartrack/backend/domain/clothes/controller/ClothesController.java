@@ -6,6 +6,7 @@ import com.weartrack.backend.domain.clothes.dto.response.ClothesCreateResponse;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesDetailResDto;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesFilterResDto;
 import com.weartrack.backend.domain.clothes.service.ClothesService;
+import com.weartrack.backend.domain.clothes.service.ClothesTransactionService;
 import com.weartrack.backend.global.response.ApiResponse;
 import com.weartrack.backend.global.security.JwtPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +26,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/clothes")
 public class ClothesController {
 
-    private final ClothesService clothesService;
+    private final ClothesTransactionService clothesTransactionService;
+
 
     @Operation(
             summary = "옷 추가 정보 등록",
@@ -40,7 +42,7 @@ public class ClothesController {
             @Valid @RequestBody ClothesCreateRequest request
     ) {
         ClothesCreateResponse response =
-                clothesService.createClothes(principal.memberId(), request);
+                clothesTransactionService.createClothes(principal.memberId(), request);
 
         return ApiResponse.success(response);
     }
@@ -58,7 +60,7 @@ public class ClothesController {
             Pageable pageable
     ) {
         return ApiResponse.success(
-                clothesService.filterClothes(principal.memberId(), color, category, pageable)
+                clothesTransactionService.filterClothes(principal.memberId(), color, category, pageable)
         );
     }
 
@@ -72,7 +74,7 @@ public class ClothesController {
             @PathVariable Long clothesId
     ) {
         return ApiResponse.success(
-                clothesService.getClothesDetail(principal.memberId(), clothesId)
+                clothesTransactionService.getClothesDetail(principal.memberId(), clothesId)
         );
     }
 
@@ -87,7 +89,7 @@ public class ClothesController {
             @RequestBody ClothesUpdateRequest request
     ) {
         return ApiResponse.success(
-                clothesService.updateClothes(principal.memberId(), clothesId, request)
+                clothesTransactionService.updateClothes(principal.memberId(), clothesId, request)
         );
     }
 
@@ -100,7 +102,7 @@ public class ClothesController {
             @AuthenticationPrincipal JwtPrincipal principal,
             @PathVariable Long clothesId
     ) {
-        clothesService.deleteClothes(principal.memberId(), clothesId);
+        clothesTransactionService.deleteClothes(principal.memberId(), clothesId);
         return ApiResponse.success("삭제되었습니다.");
     }
 }
