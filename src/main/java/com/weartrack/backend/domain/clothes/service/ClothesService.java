@@ -5,14 +5,21 @@ import com.weartrack.backend.domain.closet.exception.ClosetErrorCode;
 import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
 import com.weartrack.backend.domain.clothes.dto.request.ClothesCreateRequest;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesCreateResponse;
+import com.weartrack.backend.domain.clothes.dto.response.ClothesFilterResDto;
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
 import com.weartrack.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -58,5 +65,27 @@ public class ClothesService {
                 savedClothes.getClosetSectionId(),
                 savedClothes.getCreatedAt()
         );
+    }
+
+
+    public ClothesFilterResDto filterClothes(
+            Long memberId, String color, String category, Pageable pageable) {
+
+        Page<Clothes> page = clothesRepository.searchByMemberIdAndFilters(
+                memberId, color, category, pageable);
+
+        // 결과에 등장하는 섹션 ID들만 모아서 한 번에 조회 (N+1 방지)
+        List<Long> sectionIds = page.getContent().stream()
+                .map(Clothes::getClosetSectionId)
+                .distinct()
+                .toList();
+
+        Map<Long, String> sectionNameMap = closetSectionRepository.findAllById(sectionIds).stream()
+                .collect(Collectors.toMap(
+                        ClosetSection::getSectionId,
+                        ClosetSection::getSectionName
+                ));
+
+        return ClothesFilterResDto.from(page, sectionNameMap);
     }
 }
