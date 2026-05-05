@@ -74,6 +74,25 @@ public class S3StorageService {
                 .build());
     }
 
+
+    public void deleteByUrl(String imageUrl) {
+        String key = extractKey(imageUrl);
+        if (key != null) {
+            delete(key);
+        }
+    }
+
+    private String extractKey(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return null;
+        }
+        String marker = ".amazonaws.com/";
+        int idx = imageUrl.indexOf(marker);
+        if (idx == -1) return null;
+        return imageUrl.substring(idx + marker.length());
+    }
+
+
     private void validateImage(MultipartFile image) {
         if (image == null || image.isEmpty()) {
             throw new IllegalArgumentException("이미지 파일은 필수입니다.");

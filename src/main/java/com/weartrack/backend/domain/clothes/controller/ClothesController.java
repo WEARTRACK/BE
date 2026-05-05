@@ -47,7 +47,7 @@ public class ClothesController {
 
     @Operation(
             summary = "옷 필터 검색",
-            description = "색상 또는 카테고리로 옷 검색. 둘 중 하나만 보냅니다.."
+            description = "색상 또는 카테고리로 옷 검색. 둘 중 하나만 보냅니다."
     )
     @GetMapping("/filter")
     public ApiResponse<ClothesFilterResDto> filterClothes(
@@ -89,5 +89,18 @@ public class ClothesController {
         return ApiResponse.success(
                 clothesService.updateClothes(principal.memberId(), clothesId, request)
         );
+    }
+
+    @Operation(
+            summary = "옷 삭제",
+            description = "clothesId에 해당하는 옷을 삭제합니다."
+    )
+    @DeleteMapping("/{clothesId}")
+    public ApiResponse<String> deleteClothes(
+            @AuthenticationPrincipal JwtPrincipal principal,
+            @PathVariable Long clothesId
+    ) {
+        clothesService.deleteClothes(principal.memberId(), clothesId);
+        return ApiResponse.success("삭제되었습니다.");
     }
 }

@@ -16,6 +16,7 @@ import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
 import com.weartrack.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,15 +26,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class ClothesService {
 
     private final ClothesRepository clothesRepository;
     private final ClothesPhotoRepository clothesPhotoRepository;
     private final ClosetSectionRepository closetSectionRepository;
+    private final S3StorageService s3StorageService;
 
+    @Transactional
     public ClothesCreateResponse createClothes(Long memberId, ClothesCreateRequest request) {
 
         ClothesPhoto clothesPhoto = clothesPhotoRepository.findById(request.photoId())
@@ -113,6 +118,7 @@ public class ClothesService {
 
 
     // 옷 정보 수정
+    @Transactional
     public ClothesDetailResDto updateClothes(
             Long memberId, Long clothesId, ClothesUpdateRequest request) {
 
@@ -155,4 +161,30 @@ public class ClothesService {
 
         return targetSection;
     }
+
+    // 옷 정보 삭제
+    @Transactional
+    public void deleteClothes(Long memberId, Long clothesId) {
+
+        Clothes clothes = clothesRepository.findById(clothesId)
+                .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
+
+        ClosetSection section = closetSectionRepository.findById(clothes.getClosetSectionId())
+                .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
+
+        if (!section.getCloset().getMemberId().equals(memberId)) {
+            throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
+        }
+
+        try {
+            s3StorageService.deleteByUrl(clothes.getImageUrl());
+        } catch (Exception e) {
+            log.warn("S3 이미지 삭제 실패. clothesId={}, imageUrl={}",
+                    clothesId, clothes.getImageUrl(), e);
+        }
+
+        clothesRepository.delete(clothes);
+        section.decreaseClothesCount();
+    }
+
 }
