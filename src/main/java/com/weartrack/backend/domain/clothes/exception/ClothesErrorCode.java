@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ClothesErrorCode implements BaseErrorCode {
 
-    CLOTHES_NOT_FOUND("CLOTHES_4001", "해당 옷의 정보를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
+    CLOTHES_NOT_FOUND("CLOTHES_4001", "해당 옷의 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     CLOTHES_NOT_OWNED("CLOTHES_4002", "본인의 옷이 아닙니다.", HttpStatus.FORBIDDEN)
     ;
 

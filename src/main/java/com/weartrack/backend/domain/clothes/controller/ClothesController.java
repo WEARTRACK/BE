@@ -86,7 +86,7 @@ public class ClothesController {
     public ApiResponse<ClothesDetailResDto> updateClothes(
             @AuthenticationPrincipal JwtPrincipal principal,
             @PathVariable Long clothesId,
-            @RequestBody ClothesUpdateRequest request
+            @Valid @RequestBody ClothesUpdateRequest request
     ) {
         return ApiResponse.success(
                 clothesTransactionService.updateClothes(principal.memberId(), clothesId, request)
