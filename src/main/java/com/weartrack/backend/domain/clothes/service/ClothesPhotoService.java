@@ -1,7 +1,7 @@
 package com.weartrack.backend.domain.clothes.service;
 
-import com.weartrack.backend.domain.clothes.dto.AiClothesPredictionResponse;
-import com.weartrack.backend.domain.clothes.dto.ClothesPhotoCreateResponse;
+import com.weartrack.backend.domain.clothes.dto.response.AiClothesPredictionResponse;
+import com.weartrack.backend.domain.clothes.dto.response.ClothesPhotoCreateResponse;
 import com.weartrack.backend.domain.clothes.dto.ResultDto;
 import com.weartrack.backend.domain.clothes.entity.AnalysisStatus;
 import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;

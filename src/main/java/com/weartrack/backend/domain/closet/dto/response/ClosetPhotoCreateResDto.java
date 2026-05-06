@@ -1,4 +1,6 @@
-package com.weartrack.backend.domain.closet.dto;
+package com.weartrack.backend.domain.closet.dto.response;
+
+import com.weartrack.backend.domain.closet.dto.PredictedSectionDto;
 
 import java.util.List;
 

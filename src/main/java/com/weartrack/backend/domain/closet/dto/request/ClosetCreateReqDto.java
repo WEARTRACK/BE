@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.closet.dto;
+package com.weartrack.backend.domain.closet.dto.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

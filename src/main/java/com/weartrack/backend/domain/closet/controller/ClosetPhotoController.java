@@ -1,6 +1,6 @@
 package com.weartrack.backend.domain.closet.controller;
 
-import com.weartrack.backend.domain.closet.dto.ClosetPhotoCreateResDto;
+import com.weartrack.backend.domain.closet.dto.response.ClosetPhotoCreateResDto;
 import com.weartrack.backend.domain.closet.service.ClosetPhotoService;
 import com.weartrack.backend.global.response.ApiResponse;
 import com.weartrack.backend.global.security.JwtPrincipal;

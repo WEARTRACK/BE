@@ -2,10 +2,12 @@ package com.weartrack.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.retry.annotation.EnableRetry;
 
 /**
  * WearTrack 백엔드 애플리케이션 시작점이다.
  */
+@EnableRetry
 @SpringBootApplication
 public class WeartrackBackendApplication {
 
