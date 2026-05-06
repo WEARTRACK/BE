@@ -43,4 +43,19 @@ public interface ClothesRepository extends JpaRepository<Clothes, Long> {
 
     Page<Clothes> findByClosetSectionIdOrderByCreatedAtDesc(Long closetSectionId, Pageable pageable);
 
+    @Query("""
+    SELECT c FROM Clothes c
+    WHERE c.closetSectionId IN (
+        SELECT s.sectionId FROM ClosetSection s
+        WHERE s.closet.memberId = :memberId
+    )
+    AND (:color IS NULL OR c.color = :color)
+    AND (:category IS NULL OR c.category = :category)
+    """)
+    Page<Clothes> searchByMemberIdAndFilters(
+            @Param("memberId") Long memberId,
+            @Param("color") String color,
+            @Param("category") String category,
+            Pageable pageable
+    );
 }
