@@ -11,7 +11,6 @@ public record ClosetCreateReqDto(
         @NotNull(message = "templateId는 필수입니다.")
         Integer templateId,
 
-        @NotBlank(message = "imageUrl은 필수입니다.")
         String imageUrl,
 
         @NotEmpty(message = "칸 정보는 필수입니다.")

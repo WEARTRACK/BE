@@ -25,7 +25,7 @@ public class Closet extends BaseTimeEntity {
     @Column(name = "template_id", nullable = false)
     private Integer templateId;
 
-    @Column(name = "image_url", nullable = false)
+    @Column(name = "image_url")
     private String imageUrl;
 
     @Builder.Default
