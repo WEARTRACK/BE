@@ -31,7 +31,7 @@ public class ClosetPhotoController {
     public ApiResponse<ClosetPhotoCreateResDto> uploadClosetPhoto(
             @AuthenticationPrincipal JwtPrincipal principal,
             @RequestParam("templateId") @NotNull Integer templateId,
-            @RequestPart("image") MultipartFile image
+            @RequestPart(value = "image", required = false) MultipartFile image
     ) {
 
         ClosetPhotoCreateResDto response = closetPhotoService.uploadClosetPhoto(
