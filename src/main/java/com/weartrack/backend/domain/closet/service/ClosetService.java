@@ -137,7 +137,7 @@ public class ClosetService {
     // 해당 사용자의 옷장인지 확인
     private Closet findClosetWithOwnershipCheck(Long memberId, Long closetId) {
         Closet closet = closetRepository.findById(closetId)
-                .orElseThrow(() -> new GeneralException(ClosetErrorCode.CLOSET_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException( ClosetErrorCode.CLOSET_NOT_FOUND));
 
         if (!closet.getMemberId().equals(memberId)) {
             throw new GeneralException(ClosetErrorCode.CLOSET_NOT_OWNED);
