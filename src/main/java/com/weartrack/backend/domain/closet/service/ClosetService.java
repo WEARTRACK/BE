@@ -38,6 +38,11 @@ public class ClosetService {
     private final ClosetStatisticsMapper closetStatisticsMapper;
 
     public ClosetCreateResDto createCloset(Long memberId, ClosetCreateReqDto request) {
+
+        if (closetRepository.existsByMemberId(memberId)) {
+            throw new GeneralException(ClosetErrorCode.DUPLICATE_CLOSET);
+        }
+
         ClosetTemplate template = ClosetTemplate.from(request.templateId());
 
         validateSections(template, request.sections());

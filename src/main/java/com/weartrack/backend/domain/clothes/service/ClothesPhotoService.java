@@ -1,8 +1,8 @@
 package com.weartrack.backend.domain.clothes.service;
 
+import com.weartrack.backend.domain.clothes.dto.ResultDto;
 import com.weartrack.backend.domain.clothes.dto.response.AiClothesPredictionResponse;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesPhotoCreateResponse;
-import com.weartrack.backend.domain.clothes.dto.ResultDto;
 import com.weartrack.backend.domain.clothes.entity.AnalysisStatus;
 import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
@@ -59,12 +59,23 @@ public class ClothesPhotoService {
             );
 
         } catch (Exception e) {
-            try {
-                s3StorageService.delete(savedImage.getKey());
-            } catch (Exception cleanupException) {
-                e.addSuppressed(cleanupException);
-            }
-            throw e;
+            ClothesPhoto failedPhoto = ClothesPhoto.builder()
+                    .memberId(memberId)
+                    .imageUrl(savedImage.getImageUrl())
+                    .analysisStatus(AnalysisStatus.FAIL)
+                    .predictedCategory(null)
+                    .predictedColor(null)
+                    .build();
+
+            ClothesPhoto savedPhoto = clothesPhotoRepository.save(failedPhoto);
+
+            return new ClothesPhotoCreateResponse(
+                    savedPhoto.getId(),
+                    savedPhoto.getImageUrl(),
+                    savedPhoto.getAnalysisStatus(),
+                    savedPhoto.getPredictedCategory(),
+                    savedPhoto.getPredictedColor()
+            );
         }
     }
 }
