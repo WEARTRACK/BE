@@ -27,24 +27,30 @@ public class ClothesPhotoService {
 
         S3StorageService.SavedImage savedImage = s3StorageService.uploadClothesImage(image);
 
-        ClothesPhoto clothesPhoto = ClothesPhoto.builder()
-                .memberId(memberId)
-                .imageUrl(savedImage.getImageUrl())
-                .analysisStatus(AnalysisStatus.PENDING)
-                .predictedCategory(null)
-                .predictedColor(null)
-                .build();
+        try {
+            ClothesPhoto clothesPhoto = ClothesPhoto.builder()
+                    .memberId(memberId)
+                    .imageUrl(savedImage.getImageUrl())
+                    .analysisStatus(AnalysisStatus.PENDING)
+                    .predictedCategory(null)
+                    .predictedColor(null)
+                    .build();
 
-        ClothesPhoto savedPhoto = clothesPhotoRepository.save(clothesPhoto);
+            ClothesPhoto savedPhoto = clothesPhotoRepository.save(clothesPhoto);
 
-        clothesPhotoAnalysisAsyncService.analyzeAsync(
-                savedPhoto.getId(),
-                imageBytes,
-                originalFilename,
-                contentType
-        );
+            clothesPhotoAnalysisAsyncService.analyzeAsync(
+                    savedPhoto.getId(),
+                    imageBytes,
+                    originalFilename,
+                    contentType
+            );
 
-        return toResponse(savedPhoto);
+            return toResponse(savedPhoto);
+
+        } catch (Exception e) {
+            s3StorageService.deleteByKey(savedImage.getKey());
+            throw e;
+        }
     }
 
     public ClothesPhotoCreateResponse getAnalysisResult(Long memberId, Long photoId) {
@@ -68,7 +74,7 @@ public class ClothesPhotoService {
         try {
             return image.getBytes();
         } catch (IOException e) {
-            throw new IllegalArgumentException("이미지 파일을 읽는 중 오류가 발생했습니다.");
+            throw new IllegalArgumentException("이미지 파일을 읽는 중 오류가 발생했습니다.", e);
         }
     }
 }
