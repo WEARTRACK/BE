@@ -1,6 +1,5 @@
 package com.weartrack.backend.domain.clothes.entity;
 
-import com.weartrack.backend.domain.clothes.entity.AnalysisStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -40,6 +39,18 @@ public class ClothesPhoto {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public void markAnalysisSuccess(String predictedCategory, String predictedColor) {
+        this.analysisStatus = AnalysisStatus.SUCCESS;
+        this.predictedCategory = predictedCategory;
+        this.predictedColor = predictedColor;
+    }
+
+    public void markAnalysisFail() {
+        this.analysisStatus = AnalysisStatus.FAIL;
+        this.predictedCategory = null;
+        this.predictedColor = null;
+    }
 
     @PrePersist
     public void prePersist() {
