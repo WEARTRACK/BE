@@ -10,6 +10,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * 애플리케이션 전역 예외를 공통 API 응답으로 변환한다.
@@ -70,6 +71,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodNotAllowedException(HttpRequestMethodNotSupportedException e) {
         GlobalErrorCode errorCode = GlobalErrorCode.METHOD_NOT_ALLOWED;
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.failure(errorCode.getCode(), errorCode.getMessage(), null));
+    }
+
+    /**
+     * 존재하지 않는 경로(매핑된 핸들러·정적 리소스 없음) 요청을 404 응답으로 변환한다.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.warn("No resource found: {}", e.getResourcePath());
+
+        GlobalErrorCode errorCode = GlobalErrorCode.NOT_FOUND;
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .body(ApiResponse.failure(errorCode.getCode(), errorCode.getMessage(), null));
