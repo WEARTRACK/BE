@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ClosetRepository extends JpaRepository<Closet, Long> {
 
     long countByMemberId(Long memberId);
+
+    boolean existsByMemberId(Long memberId);
 }
