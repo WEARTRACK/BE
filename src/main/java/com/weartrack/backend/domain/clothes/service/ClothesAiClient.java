@@ -4,16 +4,12 @@ import com.weartrack.backend.domain.clothes.dto.response.AiClothesPredictionResp
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
 
 @Component
@@ -25,31 +21,46 @@ public class ClothesAiClient {
     @Value("${ai.base-url}")
     private String aiBaseUrl;
 
-    public AiClothesPredictionResponse predict(MultipartFile image) {
-        try {
-            ByteArrayResource imageResource = new ByteArrayResource(image.getBytes()) {
-                @Override
-                public String getFilename() {
-                    return image.getOriginalFilename();
+    public AiClothesPredictionResponse predict(byte[] imageBytes, String originalFilename, String contentType) {
+        ByteArrayResource imageResource = new ByteArrayResource(imageBytes) {
+            @Override
+            public String getFilename() {
+                if (originalFilename == null || originalFilename.isBlank()) {
+                    return "clothes-image.jpg";
                 }
-            };
+                return originalFilename;
+            }
+        };
 
-            LinkedMultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", imageResource);
+        MediaType imageMediaType = resolveMediaType(contentType);
 
-            return webClientBuilder
-                    .baseUrl(aiBaseUrl)
-                    .build()
-                    .post()
-                    .uri("/predict-clothes")
-                    .contentType(MediaType.MULTIPART_FORM_DATA)
-                    .body(BodyInserters.fromMultipartData(body))
-                    .retrieve()
-                    .bodyToMono(AiClothesPredictionResponse.class)
-                    .block(Duration.ofSeconds(180));
+        MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
+        bodyBuilder
+                .part("file", imageResource)
+                .filename(imageResource.getFilename())
+                .contentType(imageMediaType);
 
-        } catch (IOException e) {
-            throw new IllegalArgumentException("AI 서버로 전달할 이미지 파일을 읽는 중 오류가 발생했습니다.");
+        return webClientBuilder
+                .baseUrl(aiBaseUrl)
+                .build()
+                .post()
+                .uri("/predict-clothes")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
+                .retrieve()
+                .bodyToMono(AiClothesPredictionResponse.class)
+                .block(Duration.ofSeconds(60));
+    }
+
+    private MediaType resolveMediaType(String contentType) {
+        if (contentType == null || contentType.isBlank()) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        try {
+            return MediaType.parseMediaType(contentType);
+        } catch (IllegalArgumentException e) {
+            return MediaType.APPLICATION_OCTET_STREAM;
         }
     }
 }

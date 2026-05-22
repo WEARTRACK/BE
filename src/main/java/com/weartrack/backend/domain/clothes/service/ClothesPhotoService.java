@@ -1,81 +1,80 @@
 package com.weartrack.backend.domain.clothes.service;
 
-import com.weartrack.backend.domain.clothes.dto.ResultDto;
-import com.weartrack.backend.domain.clothes.dto.response.AiClothesPredictionResponse;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesPhotoCreateResponse;
 import com.weartrack.backend.domain.clothes.entity.AnalysisStatus;
 import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;
+import com.weartrack.backend.domain.clothes.exception.ClothesErrorCode;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
-import com.weartrack.backend.domain.clothes.util.ColorMapper;
+import com.weartrack.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ClothesPhotoService {
 
     private final S3StorageService s3StorageService;
-    private final ClothesAiClient clothesAiClient;
     private final ClothesPhotoRepository clothesPhotoRepository;
+    private final ClothesPhotoAnalysisAsyncService clothesPhotoAnalysisAsyncService;
 
     public ClothesPhotoCreateResponse uploadAndAnalyze(Long memberId, MultipartFile image) {
+        byte[] imageBytes = toBytes(image);
+        String originalFilename = image.getOriginalFilename();
+        String contentType = image.getContentType();
 
         S3StorageService.SavedImage savedImage = s3StorageService.uploadClothesImage(image);
 
         try {
-            AiClothesPredictionResponse aiResult = clothesAiClient.predict(image);
-
-            if (aiResult == null || aiResult.results() == null || aiResult.results().isEmpty()) {
-                throw new IllegalStateException("AI 분석 결과가 없습니다.");
-            }
-
-            List<ResultDto> results = aiResult.results();
-            ResultDto firstResult = results.get(0);
-
-            String predictedCategory = firstResult.category();
-            String predictedColor = ColorMapper.toEnglish(firstResult.color());
-
             ClothesPhoto clothesPhoto = ClothesPhoto.builder()
                     .memberId(memberId)
                     .imageUrl(savedImage.getImageUrl())
-                    .analysisStatus(AnalysisStatus.SUCCESS)
-                    .predictedCategory(predictedCategory)
-                    .predictedColor(predictedColor)
-                    .build();
-
-            ClothesPhoto savedPhoto = clothesPhotoRepository.save(clothesPhoto);
-
-            return new ClothesPhotoCreateResponse(
-                    savedPhoto.getId(),
-                    savedPhoto.getImageUrl(),
-                    savedPhoto.getAnalysisStatus(),
-                    savedPhoto.getPredictedCategory(),
-                    savedPhoto.getPredictedColor()
-            );
-
-        } catch (Exception e) {
-            ClothesPhoto failedPhoto = ClothesPhoto.builder()
-                    .memberId(memberId)
-                    .imageUrl(savedImage.getImageUrl())
-                    .analysisStatus(AnalysisStatus.FAIL)
+                    .analysisStatus(AnalysisStatus.PENDING)
                     .predictedCategory(null)
                     .predictedColor(null)
                     .build();
 
-            ClothesPhoto savedPhoto = clothesPhotoRepository.save(failedPhoto);
+            ClothesPhoto savedPhoto = clothesPhotoRepository.save(clothesPhoto);
 
-            return new ClothesPhotoCreateResponse(
+            clothesPhotoAnalysisAsyncService.analyzeAsync(
                     savedPhoto.getId(),
-                    savedPhoto.getImageUrl(),
-                    savedPhoto.getAnalysisStatus(),
-                    savedPhoto.getPredictedCategory(),
-                    savedPhoto.getPredictedColor()
+                    imageBytes,
+                    originalFilename,
+                    contentType
             );
+
+            return toResponse(savedPhoto);
+
+        } catch (Exception e) {
+            s3StorageService.deleteByKey(savedImage.getKey());
+            throw e;
+        }
+    }
+
+    public ClothesPhotoCreateResponse getAnalysisResult(Long memberId, Long photoId) {
+        ClothesPhoto clothesPhoto = clothesPhotoRepository.findByIdAndMemberId(photoId, memberId)
+                .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_PHOTO_NOT_FOUND));
+
+        return toResponse(clothesPhoto);
+    }
+
+    private ClothesPhotoCreateResponse toResponse(ClothesPhoto clothesPhoto) {
+        return new ClothesPhotoCreateResponse(
+                clothesPhoto.getId(),
+                clothesPhoto.getImageUrl(),
+                clothesPhoto.getAnalysisStatus(),
+                clothesPhoto.getPredictedCategory(),
+                clothesPhoto.getPredictedColor()
+        );
+    }
+
+    private byte[] toBytes(MultipartFile image) {
+        try {
+            return image.getBytes();
+        } catch (IOException e) {
+            throw new IllegalArgumentException("이미지 파일을 읽는 중 오류가 발생했습니다.", e);
         }
     }
 }
