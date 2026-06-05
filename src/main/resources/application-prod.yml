@@ -13,7 +13,7 @@ spring:
   jpa:
     database: mysql # 사용하는 데이터베이스 타입입니다.
     database-platform: org.hibernate.dialect.MySQLDialect
-    show-sql: true # 실행된 SQL을 콘솔에 출력합니다.
+    show-sql: false # 실행된 SQL을 콘솔에 출력합니다.
     hibernate:
       ddl-auto: update # 애플리케이션 실행 시 스키마를 반영합니다.
     properties:
@@ -58,13 +58,47 @@ file:
   upload-dir: uploads
 
 cloud:
-   aws:
-     region: ${AWS_REGION:ap-northeast-2}
-     s3:
-       bucket: ${AWS_S3_BUCKET}
-     credentials:
-       access-key: ${AWS_ACCESS_KEY}
-       secret-key: ${AWS_SECRET_KEY}
+  aws:
+    region: ${AWS_REGION:ap-northeast-2}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
 
 ai:
   base-url: ${AI_BASE_URL}
+
+logging:
+  level:
+    root: INFO
+    # Weartrack 내부 비즈니스 로직 로그는 상세하게(DEBUG) 확인
+    com.weartrack: DEBUG
+
+    # 커스텀 예외 처리기에서 발생하는 NoResourceFoundException 관련 WARN 로그 숨기기
+    com.weartrack.backend.global.exception.GlobalExceptionHandler: ERROR
+    # Spring MVC 내부 예외 처리기에서 발생하는 WARN 로그 숨기기
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
+
+  file:
+    # 서버 에러 추적을 위해 로그를 파일로 저장
+    name: ./logs/weartrack-application.log
+  logback:
+    rollingpolicy:
+      max-history: 30 # 최대 30일치 로그 보관
+      max-file-size: 10MB # 파일 하나당 최대 10MB 유지
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      # 프로메테우스 수집 시 구분할 서버 고유 이름표 설정
+      application: weartrack-spring-boot

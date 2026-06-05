@@ -26,7 +26,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Value("${app.cors.allowed-origins:https://wear-track.com,https://weartrack.co.kr}")
+    @Value("${app.cors.allowed-origins:https://wear-track.com,https://weartrack.co.kr,https://monitor.wear-track.com}")
     private List<String> allowedOrigins;
 
     /**
@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 "/",
                                 "/index.html",
                                 "/actuator/health",
+                                "/actuator/prometheus",
                                 "/api/auth/social/authorize/*",
                                 "/api/auth/social/login",
                                 "/login/oauth2/code/google",
