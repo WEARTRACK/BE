@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 "/",
                                 "/index.html",
                                 "/actuator/health",
+                                "/actuator/prometheus",
                                 "/api/auth/social/authorize/*",
                                 "/api/auth/social/login",
                                 "/login/oauth2/code/google",

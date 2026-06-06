@@ -3,7 +3,6 @@ package com.weartrack.backend.global.exception;
 import com.weartrack.backend.global.exception.code.BaseErrorCode;
 import com.weartrack.backend.global.exception.code.GlobalErrorCode;
 import com.weartrack.backend.global.response.ApiResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -81,14 +80,8 @@ public class GlobalExceptionHandler {
      * 존재하지 않는 경로(매핑된 핸들러·정적 리소스 없음) 요청을 404 응답으로 변환한다.
      */
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(
-            NoResourceFoundException e, HttpServletRequest request) {
-        log.warn("No resource found: method={}, uri={}, ua={}, ip={}, xff={}",
-                request.getMethod(),
-                request.getRequestURI(),
-                request.getHeader("User-Agent"),
-                request.getRemoteAddr(),
-                request.getHeader("X-Forwarded-For"));
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.debug("No resource found: {}", e.getResourcePath());
 
         GlobalErrorCode errorCode = GlobalErrorCode.NOT_FOUND;
         return ResponseEntity

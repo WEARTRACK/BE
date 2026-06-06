@@ -80,7 +80,7 @@ public class ClothesController {
 
     @Operation(
             summary = "옷 정보 수정",
-            description = "옷의 색상, 카테고리, 가격, 섹션을 수정합니다. 변경하지 않을 필드는 null로 보내면 됩니다."
+            description = "가격, 섹션을 수정합니다. 변경하지 않을 필드는 null로 보내면 됩니다."
     )
     @PatchMapping("/{clothesId}")
     public ApiResponse<ClothesDetailResDto> updateClothes(
