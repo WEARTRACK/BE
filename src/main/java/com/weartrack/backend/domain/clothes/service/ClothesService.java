@@ -132,16 +132,6 @@ public class ClothesService {
             throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
         }
 
-        if (request.color() != null && request.color().isBlank()) {
-            throw new IllegalArgumentException("color는 공백일 수 없습니다.");
-        }
-
-        if (request.category() != null && request.category().isBlank()) {
-            throw new IllegalArgumentException("category는 공백일 수 없습니다.");
-        }
-
-        clothes.updateColor(request.color());
-        clothes.updateCategory(request.category());
         clothes.updatePrice(request.price());
 
         ClosetSection finalSection = currentSection;
