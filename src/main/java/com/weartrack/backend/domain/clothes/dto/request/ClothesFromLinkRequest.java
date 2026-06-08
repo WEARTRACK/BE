@@ -14,11 +14,11 @@ public record ClothesFromLinkRequest(
         String productName,
 
         @NotBlank(message = "상품 원본 URL은 필수입니다.")
-        @Pattern(regexp = "^https?://.+", message = "상품 원본 URL은 http 또는 https 형식이어야 합니다.")
+        @Pattern(regexp = "^https?://\\S+$", message = "상품 원본 URL은 http 또는 https 형식이어야 합니다.")
         String sourceUrl,
 
         @NotBlank(message = "이미지 URL은 필수입니다.")
-        @Pattern(regexp = "^https?://.+", message = "이미지 URL은 http 또는 https 형식이어야 합니다.")
+        @Pattern(regexp = "^https?://\\S+$", message = "이미지 URL은 http 또는 https 형식이어야 합니다.")
         String imageUrl,
 
         @NotNull(message = "이미지 저장 타입은 필수입니다.")

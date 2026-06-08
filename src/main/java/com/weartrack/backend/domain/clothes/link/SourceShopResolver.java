@@ -16,15 +16,20 @@ public class SourceShopResolver {
         }
 
         String normalizedHost = host.toLowerCase(Locale.ROOT);
-        if (normalizedHost.contains("musinsa.com")) {
+        if (isSameOrSubdomain(normalizedHost, "musinsa.com")) {
             return SourceShop.MUSINSA;
         }
-        if (normalizedHost.contains("a-bly.com") || normalizedHost.contains("ably.team")) {
+        if (isSameOrSubdomain(normalizedHost, "a-bly.com")
+                || isSameOrSubdomain(normalizedHost, "ably.team")) {
             return SourceShop.ABLY;
         }
-        if (normalizedHost.contains("zigzag.kr")) {
+        if (isSameOrSubdomain(normalizedHost, "zigzag.kr")) {
             return SourceShop.ZIGZAG;
         }
         return SourceShop.UNKNOWN;
+    }
+
+    private boolean isSameOrSubdomain(String host, String domain) {
+        return host.equals(domain) || host.endsWith("." + domain);
     }
 }

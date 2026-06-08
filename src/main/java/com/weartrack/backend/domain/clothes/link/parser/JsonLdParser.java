@@ -21,6 +21,7 @@ public class JsonLdParser implements ProductParser {
             "<script[^>]+type\\s*=\\s*['\"]application/ld\\+json['\"][^>]*>(.*?)</script>",
             Pattern.CASE_INSENSITIVE | Pattern.DOTALL
     );
+    private static final int MAX_JSON_LD_DEPTH = 20;
 
     private final ObjectMapper objectMapper;
 
@@ -44,19 +45,19 @@ public class JsonLdParser implements ProductParser {
     private ProductParseResult parseJsonLdBlock(String rawJson) {
         try {
             JsonNode root = objectMapper.readTree(HtmlUtils.htmlUnescape(rawJson).trim());
-            return findProduct(root);
+            return findProduct(root, 0);
         } catch (Exception e) {
             return null;
         }
     }
 
-    private ProductParseResult findProduct(JsonNode node) {
-        if (node == null || node.isNull()) {
+    private ProductParseResult findProduct(JsonNode node, int depth) {
+        if (node == null || node.isNull() || depth > MAX_JSON_LD_DEPTH) {
             return null;
         }
         if (node.isArray()) {
             for (JsonNode child : node) {
-                ProductParseResult result = findProduct(child);
+                ProductParseResult result = findProduct(child, depth + 1);
                 if (result != null) {
                     return result;
                 }
@@ -64,7 +65,7 @@ public class JsonLdParser implements ProductParser {
             return null;
         }
         if (node.has("@graph")) {
-            ProductParseResult result = findProduct(node.get("@graph"));
+            ProductParseResult result = findProduct(node.get("@graph"), depth + 1);
             if (result != null) {
                 return result;
             }

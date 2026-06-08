@@ -55,6 +55,7 @@ public class ProductUrlNormalizer {
         }
 
         String query = Arrays.stream(rawQuery.split("&"))
+                .filter(parameter -> !parameter.isBlank())
                 .filter(parameter -> !isTrackingParameter(parameter))
                 .collect(Collectors.joining("&"));
 
@@ -63,10 +64,17 @@ public class ProductUrlNormalizer {
 
     private boolean isTrackingParameter(String parameter) {
         String key = parameter.split("=", 2)[0];
-        String decodedKey = URLDecoder.decode(key, StandardCharsets.UTF_8)
-                .toLowerCase(Locale.ROOT);
+        String decodedKey = safeDecode(key).toLowerCase(Locale.ROOT);
         return decodedKey.startsWith("utm_")
                 || decodedKey.equals("fbclid")
                 || decodedKey.equals("gclid");
+    }
+
+    private String safeDecode(String value) {
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            return value;
+        }
     }
 }

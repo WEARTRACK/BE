@@ -102,8 +102,15 @@ public class ProductPageFetcher {
         for (String part : contentType.split(";")) {
             String trimmedPart = part.trim();
             if (trimmedPart.toLowerCase().startsWith("charset=")) {
+                String charsetValue = trimmedPart.substring("charset=".length())
+                        .trim()
+                        .replace("\"", "")
+                        .replace("'", "");
+                if (charsetValue.isEmpty()) {
+                    return StandardCharsets.UTF_8;
+                }
                 try {
-                    return Charset.forName(trimmedPart.substring("charset=".length()));
+                    return Charset.forName(charsetValue);
                 } catch (Exception ignored) {
                     return StandardCharsets.UTF_8;
                 }
