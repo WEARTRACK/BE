@@ -11,6 +11,7 @@ import com.weartrack.backend.domain.clothes.dto.response.ClothesDetailResDto;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesFilterResDto;
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;
+import com.weartrack.backend.domain.clothes.entity.ImageStorageType;
 import com.weartrack.backend.domain.clothes.exception.ClothesErrorCode;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
@@ -26,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -40,12 +40,11 @@ public class ClothesService {
 
     @Transactional
     public ClothesCreateResponse createClothes(Long memberId, ClothesCreateRequest request) {
-
         ClothesPhoto clothesPhoto = clothesPhotoRepository.findById(request.photoId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 옷 사진입니다."));
+                .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_PHOTO_NOT_FOUND));
 
         if (!clothesPhoto.getMemberId().equals(memberId)) {
-            throw new IllegalArgumentException("본인이 업로드한 옷 사진만 등록할 수 있습니다.");
+            throw new GeneralException(ClothesErrorCode.CLOTHES_PHOTO_NOT_OWNED);
         }
 
         ClosetSection section = closetSectionRepository.findById(request.sectionId())
@@ -63,27 +62,15 @@ public class ClothesService {
         Clothes savedClothes = clothesRepository.save(clothes);
         section.increaseClothesCount();
 
-        return new ClothesCreateResponse(
-                savedClothes.getId(),
-                savedClothes.getClothesPhotoId(),
-                savedClothes.getImageUrl(),
-                savedClothes.getColor(),
-                savedClothes.getCategory(),
-                savedClothes.getPrice(),
-                savedClothes.getClosetSectionId(),
-                savedClothes.getCreatedAt()
-        );
+        return toCreateResponse(savedClothes);
     }
 
-
-    // 색상별, 카테고리별 필터링
     public ClothesFilterResDto filterClothes(
             Long memberId, String color, String category, Pageable pageable) {
 
         Page<Clothes> page = clothesRepository.searchByMemberIdAndFilters(
                 memberId, color, category, pageable);
 
-        // 결과에 등장하는 섹션 ID들만 모아서 한 번에 조회 (N+1 방지)
         List<Long> sectionIds = page.getContent().stream()
                 .map(Clothes::getClosetSectionId)
                 .distinct()
@@ -98,10 +85,7 @@ public class ClothesService {
         return ClothesFilterResDto.from(page, sectionNameMap);
     }
 
-
-    // 옷 상세정보 조회
     public ClothesDetailResDto getClothesDetail(Long memberId, Long clothesId) {
-
         Clothes clothes = clothesRepository.findById(clothesId)
                 .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
 
@@ -115,8 +99,6 @@ public class ClothesService {
         return ClothesDetailResDto.from(clothes, section);
     }
 
-
-    // 옷 정보 수정
     @Transactional
     public ClothesDetailResDto updateClothes(
             Long memberId, Long clothesId, ClothesUpdateRequest request) {
@@ -159,10 +141,8 @@ public class ClothesService {
         return targetSection;
     }
 
-    // 옷 정보 삭제
     @Transactional
     public void deleteClothes(Long memberId, Long clothesId) {
-
         Clothes clothes = clothesRepository.findById(clothesId)
                 .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
 
@@ -173,15 +153,34 @@ public class ClothesService {
             throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
         }
 
-        try {
-            s3StorageService.deleteByUrl(clothes.getImageUrl());
-        } catch (Exception e) {
-            log.warn("S3 이미지 삭제 실패. clothesId={}, imageUrl={}",
-                    clothesId, clothes.getImageUrl(), e);
-        }
+        clothesPhotoRepository.findById(clothes.getClothesPhotoId())
+                .filter(photo -> photo.getImageStorageType() == ImageStorageType.USER_UPLOAD)
+                .ifPresent(photo -> {
+                    try {
+                        s3StorageService.deleteByUrl(photo.getImageUrl());
+                    } catch (Exception e) {
+                        log.warn("S3 image delete failed. clothesId={}, imageUrl={}",
+                                clothesId, photo.getImageUrl(), e);
+                    }
+                });
 
         clothesRepository.delete(clothes);
         section.decreaseClothesCount();
     }
 
+    private ClothesCreateResponse toCreateResponse(Clothes clothes) {
+        return new ClothesCreateResponse(
+                clothes.getId(),
+                clothes.getClothesPhotoId(),
+                clothes.getImageUrl(),
+                clothes.getProductName(),
+                clothes.getColor(),
+                clothes.getCategory(),
+                clothes.getPrice(),
+                clothes.getPurchaseDate(),
+                clothes.getStorageLocation(),
+                clothes.getClosetSectionId(),
+                clothes.getCreatedAt()
+        );
+    }
 }

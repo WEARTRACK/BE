@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface ClothesPhotoRepository extends JpaRepository<ClothesPhoto, Long> {
 
     Optional<ClothesPhoto> findByIdAndMemberId(Long id, Long memberId);
+
+    boolean existsByMemberIdAndSourceUrl(Long memberId, String sourceUrl);
 }
