@@ -3,6 +3,7 @@ package com.weartrack.backend.domain.clothes.service;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesPhotoCreateResponse;
 import com.weartrack.backend.domain.clothes.entity.AnalysisStatus;
 import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;
+import com.weartrack.backend.domain.clothes.entity.ImageStorageType;
 import com.weartrack.backend.domain.clothes.exception.ClothesErrorCode;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
 import com.weartrack.backend.global.exception.GeneralException;
@@ -31,6 +32,7 @@ public class ClothesPhotoService {
             ClothesPhoto clothesPhoto = ClothesPhoto.builder()
                     .memberId(memberId)
                     .imageUrl(savedImage.getImageUrl())
+                    .imageStorageType(ImageStorageType.USER_UPLOAD)
                     .analysisStatus(AnalysisStatus.PENDING)
                     .predictedCategory(null)
                     .predictedColor(null)
