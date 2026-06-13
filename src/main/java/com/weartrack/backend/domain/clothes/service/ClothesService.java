@@ -11,6 +11,7 @@ import com.weartrack.backend.domain.clothes.dto.response.ClothesDetailResDto;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesFilterResDto;
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;
+import com.weartrack.backend.domain.clothes.entity.ImageStorageType;
 import com.weartrack.backend.domain.clothes.exception.ClothesErrorCode;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
@@ -42,12 +43,11 @@ public class ClothesService {
 
     @Transactional
     public ClothesCreateResponse createClothes(Long memberId, ClothesCreateRequest request) {
-
         ClothesPhoto clothesPhoto = clothesPhotoRepository.findById(request.photoId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 옷 사진입니다."));
+                .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_PHOTO_NOT_FOUND));
 
         if (!clothesPhoto.getMemberId().equals(memberId)) {
-            throw new IllegalArgumentException("본인이 업로드한 옷 사진만 등록할 수 있습니다.");
+            throw new GeneralException(ClothesErrorCode.CLOTHES_PHOTO_NOT_OWNED);
         }
 
         ClosetSection section = closetSectionRepository.findById(request.sectionId())
@@ -67,16 +67,8 @@ public class ClothesService {
 
         updateOnboardingQuestByCategory(memberId, savedClothes.getCategory());
 
-        return new ClothesCreateResponse(
-                savedClothes.getId(),
-                savedClothes.getClothesPhotoId(),
-                savedClothes.getImageUrl(),
-                savedClothes.getColor(),
-                savedClothes.getCategory(),
-                savedClothes.getPrice(),
-                savedClothes.getClosetSectionId(),
-                savedClothes.getCreatedAt()
-        );
+        return toCreateResponse(savedClothes);
+
     }
 
     public ClothesFilterResDto filterClothes(
@@ -100,7 +92,6 @@ public class ClothesService {
     }
 
     public ClothesDetailResDto getClothesDetail(Long memberId, Long clothesId) {
-
         Clothes clothes = clothesRepository.findById(clothesId)
                 .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
 
@@ -160,7 +151,6 @@ public class ClothesService {
 
     @Transactional
     public void deleteClothes(Long memberId, Long clothesId) {
-
         Clothes clothes = clothesRepository.findById(clothesId)
                 .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
 
@@ -171,12 +161,16 @@ public class ClothesService {
             throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
         }
 
-        try {
-            s3StorageService.deleteByUrl(clothes.getImageUrl());
-        } catch (Exception e) {
-            log.warn("S3 이미지 삭제 실패. clothesId={}, imageUrl={}",
-                    clothesId, clothes.getImageUrl(), e);
-        }
+        clothesPhotoRepository.findById(clothes.getClothesPhotoId())
+                .filter(photo -> photo.getImageStorageType() == ImageStorageType.USER_UPLOAD)
+                .ifPresent(photo -> {
+                    try {
+                        s3StorageService.deleteByUrl(photo.getImageUrl());
+                    } catch (Exception e) {
+                        log.warn("S3 image delete failed. clothesId={}, imageUrl={}",
+                                clothesId, photo.getImageUrl(), e);
+                    }
+                });
 
         clothesRepository.delete(clothes);
         section.decreaseClothesCount();
@@ -220,4 +214,17 @@ public class ClothesService {
                 "skirt"
         ).contains(category);
     }
+  
+    private ClothesCreateResponse toCreateResponse(Clothes savedClothes) {
+      return new ClothesCreateResponse(
+              savedClothes.getId(),
+              savedClothes.getClothesPhotoId(),
+              savedClothes.getImageUrl(),
+              savedClothes.getColor(),
+              savedClothes.getCategory(),
+              savedClothes.getPrice(),
+              savedClothes.getClosetSectionId(),
+              savedClothes.getCreatedAt()
+      );
+  }
 }

@@ -37,6 +37,36 @@ public enum ClothesErrorCode implements BaseErrorCode {
             "CLOTHES_PHOTO_4003",
             "이미지 파일을 읽는 중 오류가 발생했습니다.",
             HttpStatus.BAD_REQUEST
+    ),
+
+    PRODUCT_LINK_INVALID_URL(
+            "PRODUCT_LINK_4001",
+            "잘못된 상품 URL입니다.",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    PRODUCT_LINK_UNSUPPORTED_URL(
+            "PRODUCT_LINK_4002",
+            "지원하지 않는 URL 형식입니다.",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    PRODUCT_LINK_FETCH_FAILED(
+            "PRODUCT_LINK_4003",
+            "상품 정보를 불러올 수 없습니다. 상품 페이지를 확인하거나 직접 입력해 주세요.",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    PRODUCT_LINK_PARSE_FAILED(
+            "PRODUCT_LINK_4004",
+            "상품 정보를 불러올 수 없습니다. 상품 페이지를 확인하거나 직접 입력해 주세요.",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    PRODUCT_LINK_DUPLICATED(
+            "PRODUCT_LINK_4005",
+            "이미 등록된 상품 링크입니다.",
+            HttpStatus.CONFLICT
     );
 
     private final String code;

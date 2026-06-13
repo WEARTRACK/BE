@@ -25,6 +25,18 @@ public class ClothesPhoto {
     private String imageUrl;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "image_storage_type", nullable = false)
+    @Builder.Default
+    private ImageStorageType imageStorageType = ImageStorageType.USER_UPLOAD;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source_shop")
+    private SourceShop sourceShop;
+
+    @Column(name = "source_url", length = 1000)
+    private String sourceUrl;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "analysis_status", nullable = false)
     private AnalysisStatus analysisStatus;
 
