@@ -14,6 +14,8 @@ import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;
 import com.weartrack.backend.domain.clothes.exception.ClothesErrorCode;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
+import com.weartrack.backend.domain.onboarding.entity.QuestType;
+import com.weartrack.backend.domain.onboarding.service.OnboardingService;
 import com.weartrack.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -37,6 +38,7 @@ public class ClothesService {
     private final ClothesPhotoRepository clothesPhotoRepository;
     private final ClosetSectionRepository closetSectionRepository;
     private final S3StorageService s3StorageService;
+    private final OnboardingService onboardingService;
 
     @Transactional
     public ClothesCreateResponse createClothes(Long memberId, ClothesCreateRequest request) {
@@ -63,6 +65,8 @@ public class ClothesService {
         Clothes savedClothes = clothesRepository.save(clothes);
         section.increaseClothesCount();
 
+        updateOnboardingQuestByCategory(memberId, savedClothes.getCategory());
+
         return new ClothesCreateResponse(
                 savedClothes.getId(),
                 savedClothes.getClothesPhotoId(),
@@ -75,15 +79,12 @@ public class ClothesService {
         );
     }
 
-
-    // 색상별, 카테고리별 필터링
     public ClothesFilterResDto filterClothes(
             Long memberId, String color, String category, Pageable pageable) {
 
         Page<Clothes> page = clothesRepository.searchByMemberIdAndFilters(
                 memberId, color, category, pageable);
 
-        // 결과에 등장하는 섹션 ID들만 모아서 한 번에 조회 (N+1 방지)
         List<Long> sectionIds = page.getContent().stream()
                 .map(Clothes::getClosetSectionId)
                 .distinct()
@@ -98,8 +99,6 @@ public class ClothesService {
         return ClothesFilterResDto.from(page, sectionNameMap);
     }
 
-
-    // 옷 상세정보 조회
     public ClothesDetailResDto getClothesDetail(Long memberId, Long clothesId) {
 
         Clothes clothes = clothesRepository.findById(clothesId)
@@ -115,8 +114,6 @@ public class ClothesService {
         return ClothesDetailResDto.from(clothes, section);
     }
 
-
-    // 옷 정보 수정
     @Transactional
     public ClothesDetailResDto updateClothes(
             Long memberId, Long clothesId, ClothesUpdateRequest request) {
@@ -128,6 +125,7 @@ public class ClothesService {
                 .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
 
         Closet closet = currentSection.getCloset();
+
         if (!closet.getMemberId().equals(memberId)) {
             throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
         }
@@ -135,6 +133,7 @@ public class ClothesService {
         clothes.updatePrice(request.price());
 
         ClosetSection finalSection = currentSection;
+
         if (request.sectionId() != null && !request.sectionId().equals(currentSection.getSectionId())) {
             finalSection = moveClothesToSection(clothes, currentSection, request.sectionId(), memberId);
         }
@@ -159,7 +158,6 @@ public class ClothesService {
         return targetSection;
     }
 
-    // 옷 정보 삭제
     @Transactional
     public void deleteClothes(Long memberId, Long clothesId) {
 
@@ -184,4 +182,42 @@ public class ClothesService {
         section.decreaseClothesCount();
     }
 
+    private void updateOnboardingQuestByCategory(Long memberId, String category) {
+        if (category == null || category.isBlank()) {
+            return;
+        }
+
+        String normalizedCategory = category.trim().toLowerCase();
+
+        if (isTopCategory(normalizedCategory)) {
+            onboardingService.completeQuest(memberId, QuestType.REGISTER_TOP, 1);
+            return;
+        }
+
+        if (isBottomCategory(normalizedCategory)) {
+            onboardingService.completeQuest(memberId, QuestType.REGISTER_BOTTOM, 1);
+        }
+    }
+
+    private boolean isTopCategory(String category) {
+        return List.of(
+                "t-shirt",
+                "shirt",
+                "knit",
+                "hoodie",
+                "cardigan",
+                "jacket",
+                "coat",
+                "padding",
+                "vest"
+        ).contains(category);
+    }
+
+    private boolean isBottomCategory(String category) {
+        return List.of(
+                "pants",
+                "shorts",
+                "skirt"
+        ).contains(category);
+    }
 }
