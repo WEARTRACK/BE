@@ -11,11 +11,14 @@ import com.weartrack.backend.domain.onboarding.exception.OnboardingErrorCode;
 import com.weartrack.backend.domain.onboarding.repository.OnboardingQuestRepository;
 import com.weartrack.backend.domain.onboarding.repository.OnboardingRepository;
 import com.weartrack.backend.global.exception.GeneralException;
-import java.util.Comparator;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,21 +30,44 @@ public class OnboardingService {
 
     @Transactional
     public void initializeIfNotExists(Long memberId) {
-        if (onboardingRepository.existsByMemberId(memberId)) {
+        if (onboardingRepository.findByMemberId(memberId).isEmpty()) {
+            try {
+                onboardingRepository.saveAndFlush(Onboarding.create(memberId));
+            } catch (DataIntegrityViolationException e) {
+                // 동시에 다른 요청이 먼저 생성한 경우이므로 무시
+            }
+        }
+
+        initializeQuestIfNotExists(memberId, QuestType.REGISTER_CLOSET, 1, true);
+        initializeQuestIfNotExists(memberId, QuestType.REGISTER_TOP, 5, false);
+        initializeQuestIfNotExists(memberId, QuestType.REGISTER_BOTTOM, 2, false);
+    }
+
+    private void initializeQuestIfNotExists(
+            Long memberId,
+            QuestType questType,
+            int requiredCount,
+            boolean active
+    ) {
+        if (questRepository.existsByMemberIdAndQuestType(memberId, questType)) {
             return;
         }
 
-        Onboarding onboarding = Onboarding.create(memberId);
-        onboardingRepository.save(onboarding);
+        try {
+            OnboardingQuest quest = active
+                    ? OnboardingQuest.createActive(memberId, questType, requiredCount)
+                    : OnboardingQuest.createInactive(memberId, questType, requiredCount);
 
-        questRepository.save(OnboardingQuest.create(memberId, QuestType.REGISTER_CLOSET, 1));
-        questRepository.save(OnboardingQuest.create(memberId, QuestType.REGISTER_TOP, 5));
-        questRepository.save(OnboardingQuest.create(memberId, QuestType.REGISTER_BOTTOM, 2));
+            questRepository.saveAndFlush(quest);
+        } catch (DataIntegrityViolationException e) {
+            // 동시에 다른 요청이 같은 퀘스트를 먼저 생성한 경우이므로 무시
+        }
     }
 
     @Transactional
     public OnboardingQuestsResDto getQuests(Long memberId) {
         initializeIfNotExists(memberId);
+        activateAvailableQuests(memberId);
 
         Onboarding onboarding = getOnboarding(memberId);
         List<OnboardingQuest> quests = getSortedQuests(memberId);
@@ -61,6 +87,7 @@ public class OnboardingService {
     @Transactional
     public OnboardingStatusResDto getStatus(Long memberId) {
         initializeIfNotExists(memberId);
+        activateAvailableQuests(memberId);
 
         Onboarding onboarding = getOnboarding(memberId);
         List<OnboardingQuest> quests = questRepository.findAllByMemberId(memberId);
@@ -89,6 +116,7 @@ public class OnboardingService {
     @Transactional
     public void completeQuest(Long memberId, QuestType questType, int incrementCount) {
         initializeIfNotExists(memberId);
+        activateAvailableQuests(memberId);
 
         Onboarding onboarding = getOnboarding(memberId);
 
@@ -99,9 +127,45 @@ public class OnboardingService {
         OnboardingQuest quest = questRepository.findByMemberIdAndQuestType(memberId, questType)
                 .orElseThrow(() -> new GeneralException(OnboardingErrorCode.QUEST_NOT_FOUND));
 
+        boolean wasCompleted = quest.isCompleted();
+
         quest.increase(incrementCount);
 
+        if (!wasCompleted && quest.isCompleted()) {
+            reserveNextQuest(memberId, quest.getQuestType(), quest.getCompletedAt());
+        }
+
         completeOnboardingIfAllQuestsDone(memberId);
+    }
+
+    private void reserveNextQuest(Long memberId, QuestType completedQuestType, LocalDateTime completedAt) {
+        QuestType nextQuestType = getNextQuestType(completedQuestType);
+
+        if (nextQuestType == null) {
+            return;
+        }
+
+        OnboardingQuest nextQuest = questRepository.findByMemberIdAndQuestType(memberId, nextQuestType)
+                .orElseThrow(() -> new GeneralException(OnboardingErrorCode.QUEST_NOT_FOUND));
+
+        if (!nextQuest.isCompleted()) {
+            nextQuest.reserveAfter(completedAt);
+        }
+    }
+
+    private QuestType getNextQuestType(QuestType questType) {
+        return switch (questType) {
+            case REGISTER_CLOSET -> QuestType.REGISTER_TOP;
+            case REGISTER_TOP -> QuestType.REGISTER_BOTTOM;
+            case REGISTER_BOTTOM -> null;
+        };
+    }
+
+    private void activateAvailableQuests(Long memberId) {
+        LocalDateTime now = LocalDateTime.now();
+
+        questRepository.findAllByMemberId(memberId)
+                .forEach(quest -> quest.activateIfAvailable(now));
     }
 
     private void completeOnboardingIfAllQuestsDone(Long memberId) {

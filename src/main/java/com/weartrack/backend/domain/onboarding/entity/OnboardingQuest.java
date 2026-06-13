@@ -1,10 +1,10 @@
 package com.weartrack.backend.domain.onboarding.entity;
 
+import com.weartrack.backend.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Entity
@@ -18,7 +18,9 @@ import lombok.NoArgsConstructor;
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class OnboardingQuest {
+public class OnboardingQuest extends BaseTimeEntity {
+
+    private static final int NEXT_QUEST_DELAY_DAYS = 7;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,36 +43,79 @@ public class OnboardingQuest {
     @Column(name = "completed", nullable = false)
     private boolean completed;
 
+    @Column(name = "active", nullable = false)
+    private boolean active;
+
+    @Column(name = "available_at")
+    private LocalDateTime availableAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     @Builder
     private OnboardingQuest(
             Long memberId,
             QuestType questType,
-            int requiredCount
+            int requiredCount,
+            boolean active,
+            LocalDateTime availableAt
     ) {
         this.memberId = memberId;
         this.questType = questType;
         this.requiredCount = requiredCount;
         this.currentCount = 0;
         this.completed = false;
+        this.active = active;
+        this.availableAt = availableAt;
+        this.completedAt = null;
     }
 
-    public static OnboardingQuest create(Long memberId, QuestType questType, int requiredCount) {
+    public static OnboardingQuest createActive(Long memberId, QuestType questType, int requiredCount) {
         return OnboardingQuest.builder()
                 .memberId(memberId)
                 .questType(questType)
                 .requiredCount(requiredCount)
+                .active(true)
+                .availableAt(LocalDateTime.now())
+                .build();
+    }
+
+    public static OnboardingQuest createInactive(Long memberId, QuestType questType, int requiredCount) {
+        return OnboardingQuest.builder()
+                .memberId(memberId)
+                .questType(questType)
+                .requiredCount(requiredCount)
+                .active(false)
+                .availableAt(null)
                 .build();
     }
 
     public void increase(int count) {
-        if (completed) {
+        if (completed || !active) {
             return;
         }
 
         this.currentCount = Math.min(this.currentCount + count, this.requiredCount);
 
         if (this.currentCount >= this.requiredCount) {
-            this.completed = true;
+            complete();
+        }
+    }
+
+    public void complete() {
+        this.completed = true;
+        this.currentCount = this.requiredCount;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    public void reserveAfter(LocalDateTime baseTime) {
+        this.availableAt = baseTime.plusDays(NEXT_QUEST_DELAY_DAYS);
+        this.active = false;
+    }
+
+    public void activateIfAvailable(LocalDateTime now) {
+        if (!completed && !active && availableAt != null && !availableAt.isAfter(now)) {
+            this.active = true;
         }
     }
 }
