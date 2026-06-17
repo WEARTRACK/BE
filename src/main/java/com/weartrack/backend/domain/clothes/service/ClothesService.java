@@ -53,9 +53,13 @@ public class ClothesService {
         ClosetSection section = closetSectionRepository.findById(request.sectionId())
                 .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
 
+        if (!section.getCloset().getMemberId().equals(memberId)) {
+            throw new GeneralException(ClosetErrorCode.SECTION_NOT_OWNED);
+        }
+
         Clothes clothes = Clothes.builder()
                 .clothesPhotoId(clothesPhoto.getId())
-                .closetSectionId(request.sectionId())
+                .closetSectionId(section.getSectionId())
                 .imageUrl(clothesPhoto.getImageUrl())
                 .color(request.color())
                 .category(request.category())
@@ -68,21 +72,22 @@ public class ClothesService {
         updateOnboardingQuestByCategory(memberId, savedClothes.getCategory());
 
         return toCreateResponse(savedClothes);
-
     }
 
     public ClothesFilterResDto filterClothes(
-            Long memberId, String color, String category, Pageable pageable) {
-
+            Long memberId, String color, String category, Pageable pageable
+    ) {
         Page<Clothes> page = clothesRepository.searchByMemberIdAndFilters(
-                memberId, color, category, pageable);
+                memberId, color, category, pageable
+        );
 
         List<Long> sectionIds = page.getContent().stream()
                 .map(Clothes::getClosetSectionId)
                 .distinct()
                 .toList();
 
-        Map<Long, String> sectionNameMap = closetSectionRepository.findAllById(sectionIds).stream()
+        Map<Long, String> sectionNameMap = closetSectionRepository.findAllById(sectionIds)
+                .stream()
                 .collect(Collectors.toMap(
                         ClosetSection::getSectionId,
                         ClosetSection::getSectionName
@@ -107,8 +112,8 @@ public class ClothesService {
 
     @Transactional
     public ClothesDetailResDto updateClothes(
-            Long memberId, Long clothesId, ClothesUpdateRequest request) {
-
+            Long memberId, Long clothesId, ClothesUpdateRequest request
+    ) {
         Clothes clothes = clothesRepository.findById(clothesId)
                 .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
 
@@ -133,8 +138,11 @@ public class ClothesService {
     }
 
     private ClosetSection moveClothesToSection(
-            Clothes clothes, ClosetSection currentSection, Long targetSectionId, Long memberId) {
-
+            Clothes clothes,
+            ClosetSection currentSection,
+            Long targetSectionId,
+            Long memberId
+    ) {
         ClosetSection targetSection = closetSectionRepository.findById(targetSectionId)
                 .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
 
@@ -176,6 +184,22 @@ public class ClothesService {
         section.decreaseClothesCount();
     }
 
+    private ClothesCreateResponse toCreateResponse(Clothes savedClothes) {
+        return new ClothesCreateResponse(
+                savedClothes.getId(),
+                savedClothes.getClothesPhotoId(),
+                savedClothes.getImageUrl(),
+                savedClothes.getProductName(),
+                savedClothes.getColor(),
+                savedClothes.getCategory(),
+                savedClothes.getPrice(),
+                savedClothes.getPurchaseDate(),
+                savedClothes.getStorageLocation(),
+                savedClothes.getClosetSectionId(),
+                savedClothes.getCreatedAt()
+        );
+    }
+
     private void updateOnboardingQuestByCategory(Long memberId, String category) {
         if (category == null || category.isBlank()) {
             return;
@@ -214,17 +238,4 @@ public class ClothesService {
                 "skirt"
         ).contains(category);
     }
-  
-    private ClothesCreateResponse toCreateResponse(Clothes savedClothes) {
-      return new ClothesCreateResponse(
-              savedClothes.getId(),
-              savedClothes.getClothesPhotoId(),
-              savedClothes.getImageUrl(),
-              savedClothes.getColor(),
-              savedClothes.getCategory(),
-              savedClothes.getPrice(),
-              savedClothes.getClosetSectionId(),
-              savedClothes.getCreatedAt()
-      );
-  }
 }
