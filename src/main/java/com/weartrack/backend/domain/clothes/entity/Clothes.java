@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "clothes")
@@ -27,6 +28,9 @@ public class Clothes {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
+    @Column(name = "product_name")
+    private String productName;
+
     @Column(name = "color", nullable = false)
     private String color;
 
@@ -35,6 +39,12 @@ public class Clothes {
 
     @Column(name = "price")
     private Integer price;
+
+    @Column(name = "purchase_date")
+    private LocalDate purchaseDate;
+
+    @Column(name = "storage_location", length = 100)
+    private String storageLocation;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

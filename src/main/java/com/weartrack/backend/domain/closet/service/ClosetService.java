@@ -16,6 +16,8 @@ import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesListResDto;
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
+import com.weartrack.backend.domain.onboarding.entity.QuestType;
+import com.weartrack.backend.domain.onboarding.service.OnboardingService;
 import com.weartrack.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,7 @@ public class ClosetService {
     private final ClosetSectionRepository sectionRepository;
     private final ClothesRepository clothesRepository;
     private final ClosetStatisticsMapper closetStatisticsMapper;
+    private final OnboardingService onboardingService;
 
     public ClosetCreateResDto createCloset(Long memberId, ClosetCreateReqDto request) {
 
@@ -66,6 +69,8 @@ public class ClosetService {
                 });
 
         Closet savedCloset = closetRepository.save(closet);
+
+        onboardingService.completeQuest(memberId, QuestType.REGISTER_CLOSET, 1);
 
         List<ClosetSectionResDto> sectionResponses = savedCloset.getSections()
                 .stream()

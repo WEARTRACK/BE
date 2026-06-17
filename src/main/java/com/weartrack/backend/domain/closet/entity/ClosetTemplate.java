@@ -6,22 +6,28 @@ import lombok.Getter;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 @Getter
 public enum ClosetTemplate {
 
-    TEMPLATE_1(1, 7),
-    TEMPLATE_2(2, 4),
-    TEMPLATE_3(3, 4),
-    TEMPLATE_4(4, 8),
-    TEMPLATE_5(5, 10);
+    TEMPLATE_2(2),
+    TEMPLATE_3(3),
+    TEMPLATE_4(4),
+    TEMPLATE_5(5),
+    TEMPLATE_6(6),
+    TEMPLATE_7(7),
+    TEMPLATE_8(8),
+    TEMPLATE_9(9),
+    TEMPLATE_10(10),
+    TEMPLATE_11(11);
 
     private final Integer templateId;
     private final Integer sectionCount;
 
-    ClosetTemplate(Integer templateId, Integer sectionCount) {
+    ClosetTemplate(Integer templateId) {
         this.templateId = templateId;
-        this.sectionCount = sectionCount;
+        this.sectionCount = templateId;
     }
 
     public static ClosetTemplate from(Integer templateId) {
@@ -32,7 +38,7 @@ public enum ClosetTemplate {
     }
 
     public List<Integer> getSectionOrders() {
-        return java.util.stream.IntStream.rangeClosed(1, sectionCount)
+        return IntStream.rangeClosed(1, sectionCount)
                 .boxed()
                 .toList();
     }
