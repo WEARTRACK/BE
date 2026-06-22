@@ -18,7 +18,7 @@ public class ClosetAiClient {
 
     private final WebClient.Builder webClientBuilder;
 
-    @Value("${ai.base-url}")
+    @Value("${ai.closet-base-url}")
     private String closetAiBaseUrl;
 
     public AiClosetPredictionResponse predict(byte[] imageBytes, String originalFilename, String contentType) {
@@ -37,6 +37,8 @@ public class ClosetAiClient {
                 .part("file", imageResource)
                 .filename(imageResource.getFilename())
                 .contentType(resolveMediaType(contentType));
+
+        System.out.println("AI URL = " + closetAiBaseUrl);
 
         return webClientBuilder
                 .baseUrl(closetAiBaseUrl)
