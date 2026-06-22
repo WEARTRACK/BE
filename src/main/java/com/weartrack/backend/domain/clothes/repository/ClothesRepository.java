@@ -41,6 +41,29 @@ public interface ClothesRepository extends JpaRepository<Clothes, Long> {
     """)
     List<Clothes> findAllByClosetId(@Param("closetId") Long closetId);
 
+    @Query("""
+        SELECT c FROM Clothes c
+        WHERE c.closetSectionId IN (
+            SELECT s.sectionId FROM ClosetSection s
+            WHERE s.closet.memberId = :memberId
+        )
+        ORDER BY c.category ASC, c.createdAt DESC
+        """)
+    List<Clothes> findAllByMemberId(@Param("memberId") Long memberId);
+
+    @Query("""
+        SELECT COUNT(c) FROM Clothes c
+        WHERE c.id IN :clothesIds
+          AND c.closetSectionId IN (
+              SELECT s.sectionId FROM ClosetSection s
+              WHERE s.closet.memberId = :memberId
+          )
+        """)
+    long countOwnedClothesByIds(
+            @Param("memberId") Long memberId,
+            @Param("clothesIds") List<Long> clothesIds
+    );
+
     Page<Clothes> findByClosetSectionIdOrderByCreatedAtDesc(Long closetSectionId, Pageable pageable);
 
     @Query("""
