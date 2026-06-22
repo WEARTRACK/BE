@@ -38,6 +38,8 @@ public class ClosetAiClient {
                 .filename(imageResource.getFilename())
                 .contentType(resolveMediaType(contentType));
 
+        System.out.println("AI URL = " + closetAiBaseUrl);
+
         return webClientBuilder
                 .baseUrl(closetAiBaseUrl)
                 .build()
