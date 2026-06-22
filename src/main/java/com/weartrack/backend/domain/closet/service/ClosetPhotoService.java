@@ -8,12 +8,14 @@ import com.weartrack.backend.domain.closet.exception.ClosetErrorCode;
 import com.weartrack.backend.domain.clothes.service.S3StorageService;
 import com.weartrack.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ClosetPhotoService {
@@ -22,11 +24,21 @@ public class ClosetPhotoService {
     private final ClosetAiClient closetAiClient;
 
     public ClosetPhotoCreateResDto uploadClosetPhoto(Long memberId, MultipartFile image) {
+        log.info("[ClosetPhoto] upload start. memberId={}, filename={}, contentType={}, size={}",
+                memberId,
+                image != null ? image.getOriginalFilename() : null,
+                image != null ? image.getContentType() : null,
+                image != null ? image.getSize() : null
+        );
+
         if (image == null || image.isEmpty()) {
+            log.warn("[ClosetPhoto] invalid image. image is null or empty");
             throw new GeneralException(ClosetErrorCode.INVALID_IMAGE);
         }
 
         byte[] imageBytes = toBytes(image);
+
+        log.info("[ClosetPhoto] before AI request");
 
         AiClosetPredictionResponse aiResponse = closetAiClient.predict(
                 imageBytes,
@@ -34,7 +46,12 @@ public class ClosetPhotoService {
                 image.getContentType()
         );
 
-        if (aiResponse == null || aiResponse.recommendedTemplateIds() == null || aiResponse.recommendedTemplateIds().isEmpty()) {
+        log.info("[ClosetPhoto] after AI response. response={}", aiResponse);
+
+        if (aiResponse == null
+                || aiResponse.recommendedTemplateIds() == null
+                || aiResponse.recommendedTemplateIds().isEmpty()) {
+            log.warn("[ClosetPhoto] invalid AI response. response={}", aiResponse);
             throw new GeneralException(ClosetErrorCode.INVALID_TEMPLATE_ID);
         }
 
@@ -50,7 +67,12 @@ public class ClosetPhotoService {
                 })
                 .toList();
 
+        log.info("[ClosetPhoto] recommendedTemplates={}", recommendedTemplates);
+        log.info("[ClosetPhoto] before S3 upload");
+
         S3StorageService.SavedImage savedImage = s3StorageService.uploadClosetImage(image);
+
+        log.info("[ClosetPhoto] after S3 upload. imageUrl={}", savedImage.getImageUrl());
 
         return new ClosetPhotoCreateResDto(
                 "SUCCESS",
@@ -65,6 +87,7 @@ public class ClosetPhotoService {
         try {
             return image.getBytes();
         } catch (IOException e) {
+            log.error("[ClosetPhoto] failed to convert image to bytes", e);
             throw new GeneralException(ClosetErrorCode.INVALID_IMAGE);
         }
     }
