@@ -24,6 +24,10 @@ public final class CategoryOrder {
     private CategoryOrder() {
     }
 
+    public static List<String> orderedCategories() {
+        return ORDERED_CATEGORIES;
+    }
+
     public static Comparator<String> comparator() {
         return Comparator
                 .comparingInt(CategoryOrder::orderIndex)
@@ -41,7 +45,7 @@ public final class CategoryOrder {
         return ORDERED_CATEGORIES.size();
     }
 
-    private static String normalize(String category) {
+    public static String normalize(String category) {
         if (category == null) {
             return "";
         }

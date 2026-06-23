@@ -4,8 +4,8 @@ import com.weartrack.backend.domain.closet.repository.ClosetRepository;
 import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
-import com.weartrack.backend.domain.dailyreview.entity.DailyReview;
-import com.weartrack.backend.domain.dailyreview.repository.DailyReviewRepository;
+import com.weartrack.backend.domain.dailyReview.entity.DailyReview;
+import com.weartrack.backend.domain.dailyReview.repository.DailyReviewRepository;
 import com.weartrack.backend.domain.home.dto.response.HomeSummaryResDto;
 import com.weartrack.backend.domain.home.dto.response.HomeWeeklyClosetUsageAnalysisResDto;
 import com.weartrack.backend.domain.home.dto.response.HomeWeeklyWornClothesResDto;
@@ -42,7 +42,11 @@ public class HomeService {
 
         List<Clothes> clothes = clothesRepository.findAllByMemberId(memberId);
         long totalClothesCount = clothes.size();
-        long weeklyExpenseAmount = calculateWeeklyExpenseAmount(clothes, weekStartDate);
+        long weeklyExpenseAmount = calculateWeeklyExpenseAmount(
+                clothes,
+                weekStartDate,
+                weekEndDate
+        );
         long weeklyWornClothesCount = getWeeklyWornClothesIds(
                 memberId,
                 weekStartDate,
@@ -178,10 +182,17 @@ public class HomeService {
                 .sum();
     }
 
-    private long calculateWeeklyExpenseAmount(List<Clothes> clothes, LocalDate weekStartDate) {
+    private long calculateWeeklyExpenseAmount(
+            List<Clothes> clothes,
+            LocalDate weekStartDate,
+            LocalDate weekEndDate
+    ) {
         return clothes.stream()
                 .filter(clothesItem -> clothesItem.getCreatedAt() != null)
-                .filter(clothesItem -> !clothesItem.getCreatedAt().toLocalDate().isBefore(weekStartDate))
+                .filter(clothesItem -> {
+                    LocalDate createdDate = clothesItem.getCreatedAt().toLocalDate();
+                    return !createdDate.isBefore(weekStartDate) && !createdDate.isAfter(weekEndDate);
+                })
                 .map(Clothes::getPrice)
                 .filter(price -> price != null)
                 .mapToLong(Integer::longValue)
