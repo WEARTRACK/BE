@@ -1,5 +1,6 @@
 package com.weartrack.backend.domain.fashionReport.controller;
 
+import com.weartrack.backend.domain.fashionReport.dto.response.WeeklyFashionConsumptionCategoryClothesResDto;
 import com.weartrack.backend.domain.fashionReport.dto.response.WeeklyFashionConsumptionReportResDto;
 import com.weartrack.backend.domain.fashionReport.service.FashionConsumptionReportService;
 import com.weartrack.backend.global.response.ApiResponse;
@@ -39,11 +40,25 @@ public class FashionConsumptionReportController {
     }
 
     @Operation(
+            summary = "현재 주간 카테고리별 구매 내역 조회",
+            description = "패션 소비 리포트의 카테고리별 지출 항목을 눌렀을 때 호출하는 API입니다."
+    )
+    @GetMapping("/weekly/current/categories/{category}/clothes")
+    public ApiResponse<WeeklyFashionConsumptionCategoryClothesResDto> getCurrentWeeklyCategoryClothes(
+            @AuthenticationPrincipal JwtPrincipal principal,
+            @PathVariable String category
+    ) {
+        return ApiResponse.success(
+                fashionConsumptionReportService.getCurrentWeeklyCategoryClothes(
+                        principal.memberId(),
+                        category
+                )
+        );
+    }
+
+    @Operation(
             summary = "특정 주차 패션 소비 리포트 조회",
-            description = """
-                    특정 주차의 패션 소비 리포트를 조회합니다.
-                    weekStartDate는 해당 주의 시작일(일요일)을 yyyy-MM-dd 형식으로 전달합니다.
-                    """
+            description = "특정 주차의 패션 소비 리포트를 조회합니다.  weekStartDate는 해당 주의 시작일(일요일)을 yyyy-MM-dd 형식으로 전달합니다."
     )
     @GetMapping("/weekly/{weekStartDate}")
     public ApiResponse<WeeklyFashionConsumptionReportResDto> getWeeklyReport(
@@ -54,6 +69,25 @@ public class FashionConsumptionReportController {
                 fashionConsumptionReportService.getWeeklyReport(
                         principal.memberId(),
                         weekStartDate
+                )
+        );
+    }
+
+    @Operation(
+            summary = "특정 주차 카테고리별 구매 내역 조회",
+            description = "특정 주차의 패션 소비 리포트에서 선택한 카테고리 구매 내역을 조회합니다. weekStartDate는 해당 주의 시작일(일요일)을 yyyy-MM-dd 형식으로 전달합니다."
+    )
+    @GetMapping("/weekly/{weekStartDate}/categories/{category}/clothes")
+    public ApiResponse<WeeklyFashionConsumptionCategoryClothesResDto> getWeeklyCategoryClothes(
+            @AuthenticationPrincipal JwtPrincipal principal,
+            @PathVariable LocalDate weekStartDate,
+            @PathVariable String category
+    ) {
+        return ApiResponse.success(
+                fashionConsumptionReportService.getWeeklyCategoryClothes(
+                        principal.memberId(),
+                        weekStartDate,
+                        category
                 )
         );
     }
