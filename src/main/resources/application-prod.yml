@@ -68,6 +68,7 @@ cloud:
 
 ai:
   base-url: ${AI_BASE_URL}
+  closet-base-url: ${AI_CLOSET_BASE_URL}
 
 logging:
   level:
