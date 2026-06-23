@@ -1,13 +1,16 @@
 package com.weartrack.backend.domain.fashionReport.controller;
 
+import com.weartrack.backend.domain.fashionReport.dto.response.MonthlyFashionConsumptionReportResDto;
 import com.weartrack.backend.domain.fashionReport.dto.response.WeeklyFashionConsumptionCategoryClothesResDto;
 import com.weartrack.backend.domain.fashionReport.dto.response.WeeklyFashionConsumptionReportResDto;
 import com.weartrack.backend.domain.fashionReport.service.FashionConsumptionReportService;
+import com.weartrack.backend.domain.fashionReport.service.MonthlyFashionConsumptionReportService;
 import com.weartrack.backend.global.response.ApiResponse;
 import com.weartrack.backend.global.security.JwtPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +25,37 @@ import org.springframework.web.bind.annotation.RestController;
 public class FashionConsumptionReportController {
 
     private final FashionConsumptionReportService fashionConsumptionReportService;
+    private final MonthlyFashionConsumptionReportService monthlyFashionConsumptionReportService;
+
+    @Operation(
+            summary = "현재 월간 패션 소비 리포트 조회",
+            description = "패션 소비 리포트 화면의 월간 탭에서 현재 월의 총 지출, 최근 4개월 추이, TOP3 카테고리를 조회합니다."
+    )
+    @GetMapping("/monthly/current")
+    public ApiResponse<MonthlyFashionConsumptionReportResDto> getCurrentMonthlyReport(
+            @AuthenticationPrincipal JwtPrincipal principal
+    ) {
+        return ApiResponse.success(
+                monthlyFashionConsumptionReportService.getCurrentMonthlyReport(principal.memberId())
+        );
+    }
+
+    @Operation(
+            summary = "특정 월간 패션 소비 리포트 조회",
+            description = "특정 월의 패션 소비 리포트를 조회합니다. yearMonth는 yyyy-MM 형식으로 전달합니다."
+    )
+    @GetMapping("/monthly/{yearMonth}")
+    public ApiResponse<MonthlyFashionConsumptionReportResDto> getMonthlyReport(
+            @AuthenticationPrincipal JwtPrincipal principal,
+            @PathVariable String yearMonth
+    ) {
+        return ApiResponse.success(
+                monthlyFashionConsumptionReportService.getMonthlyReport(
+                        principal.memberId(),
+                        YearMonth.parse(yearMonth)
+                )
+        );
+    }
 
     @Operation(
             summary = "현재 주간 패션 소비 리포트 조회",

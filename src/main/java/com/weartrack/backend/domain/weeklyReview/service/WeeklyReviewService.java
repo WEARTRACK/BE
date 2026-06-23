@@ -57,7 +57,7 @@ public class WeeklyReviewService {
 
         long totalClothesCount = clothes.size();
         int usageRate = calculateUsageRate(wornClothesIds.size(), totalClothesCount);
-        WeeklyReviewSummaryResDto.WeeklyInsight weeklyInsight =
+        String weeklyInsight =
                 createWeeklyInsight(memberId, weekStartDate, totalClothesCount, usageRate);
 
         return new WeeklyReviewSummaryResDto(
@@ -95,7 +95,7 @@ public class WeeklyReviewService {
         return new WeeklyReviewSummaryResDto.CategoryGroup(category, items.size(), items);
     }
 
-    private WeeklyReviewSummaryResDto.WeeklyInsight createWeeklyInsight(
+    private String createWeeklyInsight(
             Long memberId,
             LocalDate weekStartDate,
             long totalClothesCount,
@@ -109,11 +109,7 @@ public class WeeklyReviewService {
         );
         int usageRateChange = usageRate - previousWeekUsageRate;
 
-        return new WeeklyReviewSummaryResDto.WeeklyInsight(
-                previousWeekUsageRate,
-                usageRateChange,
-                createInsightMessage(usageRateChange)
-        );
+        return createInsightMessage(usageRateChange);
     }
 
     private String createInsightMessage(int usageRateChange) {

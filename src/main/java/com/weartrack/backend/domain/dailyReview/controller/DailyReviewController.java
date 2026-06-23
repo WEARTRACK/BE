@@ -33,7 +33,7 @@ public class DailyReviewController {
                     매일 20시 푸시 또는 홈 화면 진입 시 오늘 입은 옷을 선택하기 위한 API입니다.
                     """
     )
-    @GetMapping("/today")
+    @GetMapping("/current")
     public ApiResponse<DailyReviewEntryResDto> getTodayReview(
             @AuthenticationPrincipal JwtPrincipal principal
     ) {

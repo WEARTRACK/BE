@@ -8,16 +8,9 @@ public record WeeklyReviewSummaryResDto(
         LocalDate weekEndDate,
         int wornClothesCount,
         int weeklyClosetUsageRate,
-        WeeklyInsight weeklyInsight,
+        String weeklyInsight,
         List<CategoryGroup> categories
 ) {
-    public record WeeklyInsight(
-            int previousWeekClosetUsageRate,
-            int usageRateChange,
-            String message
-    ) {
-    }
-
     public record CategoryGroup(
             String category,
             int wornCount,
