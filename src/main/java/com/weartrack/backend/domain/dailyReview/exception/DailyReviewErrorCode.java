@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.dailyreview.exception;
+package com.weartrack.backend.domain.dailyReview.exception;
 
 import com.weartrack.backend.global.exception.code.BaseErrorCode;
 import lombok.Getter;

@@ -1,14 +1,14 @@
-package com.weartrack.backend.domain.dailyreview.service;
+package com.weartrack.backend.domain.dailyReview.service;
 
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
 import com.weartrack.backend.domain.clothes.util.CategoryOrder;
-import com.weartrack.backend.domain.dailyreview.dto.request.DailyReviewSaveReqDto;
-import com.weartrack.backend.domain.dailyreview.dto.response.DailyReviewEntryResDto;
-import com.weartrack.backend.domain.dailyreview.dto.response.DailyReviewSaveResDto;
-import com.weartrack.backend.domain.dailyreview.entity.DailyReview;
-import com.weartrack.backend.domain.dailyreview.exception.DailyReviewErrorCode;
-import com.weartrack.backend.domain.dailyreview.repository.DailyReviewRepository;
+import com.weartrack.backend.domain.dailyReview.dto.request.DailyReviewSaveReqDto;
+import com.weartrack.backend.domain.dailyReview.dto.response.DailyReviewEntryResDto;
+import com.weartrack.backend.domain.dailyReview.dto.response.DailyReviewSaveResDto;
+import com.weartrack.backend.domain.dailyReview.entity.DailyReview;
+import com.weartrack.backend.domain.dailyReview.exception.DailyReviewErrorCode;
+import com.weartrack.backend.domain.dailyReview.repository.DailyReviewRepository;
 import com.weartrack.backend.domain.weeklyReview.dto.response.WeeklyReviewSummaryResDto;
 import com.weartrack.backend.domain.weeklyReview.service.WeeklyReviewService;
 import com.weartrack.backend.global.exception.GeneralException;

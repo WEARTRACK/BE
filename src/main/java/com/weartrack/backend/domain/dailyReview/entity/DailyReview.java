@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.dailyreview.entity;
+package com.weartrack.backend.domain.dailyReview.entity;
 
 import com.weartrack.backend.global.entity.BaseTimeEntity;
 import jakarta.persistence.CascadeType;

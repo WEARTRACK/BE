@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.dailyreview.notification;
+package com.weartrack.backend.domain.dailyReview.notification;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.dailyreview.notification;
+package com.weartrack.backend.domain.dailyReview.notification;
 
 public interface DailyReviewPushSender {
 

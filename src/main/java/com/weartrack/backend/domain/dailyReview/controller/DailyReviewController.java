@@ -1,9 +1,9 @@
-package com.weartrack.backend.domain.dailyreview.controller;
+package com.weartrack.backend.domain.dailyReview.controller;
 
-import com.weartrack.backend.domain.dailyreview.dto.request.DailyReviewSaveReqDto;
-import com.weartrack.backend.domain.dailyreview.dto.response.DailyReviewEntryResDto;
-import com.weartrack.backend.domain.dailyreview.dto.response.DailyReviewSaveResDto;
-import com.weartrack.backend.domain.dailyreview.service.DailyReviewService;
+import com.weartrack.backend.domain.dailyReview.dto.request.DailyReviewSaveReqDto;
+import com.weartrack.backend.domain.dailyReview.dto.response.DailyReviewEntryResDto;
+import com.weartrack.backend.domain.dailyReview.dto.response.DailyReviewSaveResDto;
+import com.weartrack.backend.domain.dailyReview.service.DailyReviewService;
 import com.weartrack.backend.global.response.ApiResponse;
 import com.weartrack.backend.global.security.JwtPrincipal;
 import io.swagger.v3.oas.annotations.Operation;

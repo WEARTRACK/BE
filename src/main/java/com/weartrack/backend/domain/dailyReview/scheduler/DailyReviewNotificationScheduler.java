@@ -1,6 +1,6 @@
-package com.weartrack.backend.domain.dailyreview.scheduler;
+package com.weartrack.backend.domain.dailyReview.scheduler;
 
-import com.weartrack.backend.domain.dailyreview.notification.DailyReviewPushSender;
+import com.weartrack.backend.domain.dailyReview.notification.DailyReviewPushSender;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

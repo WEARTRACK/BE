@@ -1,6 +1,6 @@
-package com.weartrack.backend.domain.dailyreview.repository;
+package com.weartrack.backend.domain.dailyReview.repository;
 
-import com.weartrack.backend.domain.dailyreview.entity.DailyReview;
+import com.weartrack.backend.domain.dailyReview.entity.DailyReview;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;

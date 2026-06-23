@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.dailyreview.dto.request;
+package com.weartrack.backend.domain.dailyReview.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.List;

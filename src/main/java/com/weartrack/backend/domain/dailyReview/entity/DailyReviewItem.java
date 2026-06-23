@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.dailyreview.entity;
+package com.weartrack.backend.domain.dailyReview.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

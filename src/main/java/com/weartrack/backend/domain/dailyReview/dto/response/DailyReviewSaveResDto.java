@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.dailyreview.dto.response;
+package com.weartrack.backend.domain.dailyReview.dto.response;
 
 import com.weartrack.backend.domain.weeklyReview.dto.response.WeeklyReviewSummaryResDto;
 import java.time.LocalDate;
