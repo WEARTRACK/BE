@@ -40,11 +40,7 @@ public class WeeklyReviewController {
 
     @Operation(
             summary = "특정 주차 회고 결과 조회",
-            description = """
-                    특정 주차의 일간 착용 기록을 집계합니다.
-                    
-                    weekStartDate는 해당 주의 시작일(일요일)을 yyyy-MM-dd 형식으로 전달합니다.
-                    """
+            description = " 특정 주차의 일간 착용 기록을 집계합니다. weekStartDate는 해당 주의 시작일(일요일)을 yyyy-MM-dd 형식으로 전달합니다."
     )
     @GetMapping("/{weekStartDate}")
     public ApiResponse<WeeklyReviewSummaryResDto> getReview(
