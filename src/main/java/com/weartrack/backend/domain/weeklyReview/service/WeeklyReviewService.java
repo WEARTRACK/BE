@@ -1,11 +1,11 @@
-package com.weartrack.backend.domain.weeklyreview.service;
+package com.weartrack.backend.domain.weeklyReview.service;
 
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
 import com.weartrack.backend.domain.clothes.util.CategoryOrder;
 import com.weartrack.backend.domain.dailyreview.entity.DailyReview;
 import com.weartrack.backend.domain.dailyreview.repository.DailyReviewRepository;
-import com.weartrack.backend.domain.weeklyreview.dto.response.WeeklyReviewSummaryResDto;
+import com.weartrack.backend.domain.weeklyReview.dto.response.WeeklyReviewSummaryResDto;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;

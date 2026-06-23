@@ -1,7 +1,7 @@
-package com.weartrack.backend.domain.weeklyreview.controller;
+package com.weartrack.backend.domain.weeklyReview.controller;
 
-import com.weartrack.backend.domain.weeklyreview.dto.response.WeeklyReviewSummaryResDto;
-import com.weartrack.backend.domain.weeklyreview.service.WeeklyReviewService;
+import com.weartrack.backend.domain.weeklyReview.dto.response.WeeklyReviewSummaryResDto;
+import com.weartrack.backend.domain.weeklyReview.service.WeeklyReviewService;
 import com.weartrack.backend.global.response.ApiResponse;
 import com.weartrack.backend.global.security.JwtPrincipal;
 import io.swagger.v3.oas.annotations.Operation;

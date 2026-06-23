@@ -9,8 +9,8 @@ import com.weartrack.backend.domain.dailyreview.dto.response.DailyReviewSaveResD
 import com.weartrack.backend.domain.dailyreview.entity.DailyReview;
 import com.weartrack.backend.domain.dailyreview.exception.DailyReviewErrorCode;
 import com.weartrack.backend.domain.dailyreview.repository.DailyReviewRepository;
-import com.weartrack.backend.domain.weeklyreview.dto.response.WeeklyReviewSummaryResDto;
-import com.weartrack.backend.domain.weeklyreview.service.WeeklyReviewService;
+import com.weartrack.backend.domain.weeklyReview.dto.response.WeeklyReviewSummaryResDto;
+import com.weartrack.backend.domain.weeklyReview.service.WeeklyReviewService;
 import com.weartrack.backend.global.exception.GeneralException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
