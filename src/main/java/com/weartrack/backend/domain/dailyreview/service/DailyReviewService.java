@@ -2,6 +2,7 @@ package com.weartrack.backend.domain.dailyreview.service;
 
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
+import com.weartrack.backend.domain.clothes.util.CategoryOrder;
 import com.weartrack.backend.domain.dailyreview.dto.request.DailyReviewSaveReqDto;
 import com.weartrack.backend.domain.dailyreview.dto.response.DailyReviewEntryResDto;
 import com.weartrack.backend.domain.dailyreview.dto.response.DailyReviewSaveResDto;
@@ -15,6 +16,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -54,6 +56,7 @@ public class DailyReviewService {
                 .collect(Collectors.toSet());
 
         List<DailyReviewEntryResDto.CategoryGroup> categories = clothes.stream()
+                .sorted(clothesComparator())
                 .collect(Collectors.groupingBy(
                         Clothes::getCategory,
                         LinkedHashMap::new,
@@ -87,17 +90,14 @@ public class DailyReviewService {
 
         validateOwnedClothes(memberId, clothesIds);
 
-        dailyReviewRepository.findByMemberIdAndReviewDate(memberId, reviewDate)
-                .ifPresent(review -> {
-                    throw new GeneralException(DailyReviewErrorCode.DAILY_REVIEW_ALREADY_EXISTS);
-                });
+        DailyReview review = dailyReviewRepository
+                .findByMemberIdAndReviewDate(memberId, reviewDate)
+                .orElseGet(() -> DailyReview.builder()
+                        .memberId(memberId)
+                        .reviewDate(reviewDate)
+                        .build());
 
-        DailyReview review = DailyReview.builder()
-                .memberId(memberId)
-                .reviewDate(reviewDate)
-                .build();
-
-        review.replaceItems(clothesIds);
+        review.addItems(clothesIds);
         DailyReview savedReview = dailyReviewRepository.save(review);
 
         LocalDate weekStartDate = getWeekStartDate(reviewDate);
@@ -108,8 +108,8 @@ public class DailyReviewService {
 
         return new DailyReviewSaveResDto(
                 savedReview.getReviewDate(),
-                clothesIds.size(),
-                clothesIds.isEmpty(),
+                savedReview.getItems().size(),
+                savedReview.getItems().isEmpty(),
                 weeklyReview
         );
     }
@@ -134,6 +134,12 @@ public class DailyReviewService {
                 .count();
 
         return new DailyReviewEntryResDto.CategoryGroup(category, selectedCount, items);
+    }
+
+    private Comparator<Clothes> clothesComparator() {
+        return Comparator
+                .comparing((Clothes clothes) -> clothes.getCategory(), CategoryOrder.comparator())
+                .thenComparing(Clothes::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()));
     }
 
     private void validateOwnedClothes(Long memberId, List<Long> clothesIds) {
