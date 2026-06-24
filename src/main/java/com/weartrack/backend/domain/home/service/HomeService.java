@@ -4,6 +4,7 @@ import com.weartrack.backend.domain.closet.repository.ClosetRepository;
 import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
+import com.weartrack.backend.domain.clothes.util.CategoryOrder;
 import com.weartrack.backend.domain.dailyReview.entity.DailyReview;
 import com.weartrack.backend.domain.dailyReview.repository.DailyReviewRepository;
 import com.weartrack.backend.domain.home.dto.response.HomeSummaryResDto;
@@ -13,6 +14,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -111,6 +113,7 @@ public class HomeService {
         );
         List<Clothes> weeklyWornClothes = clothes.stream()
                 .filter(clothesItem -> weeklyWornClothesIds.contains(clothesItem.getId()))
+                .sorted(clothesComparator())
                 .toList();
 
         int weeklyClosetUsageRate = calculateWeeklyClosetUsageRate(
@@ -180,6 +183,12 @@ public class HomeService {
                 .filter(price -> price != null)
                 .mapToLong(Integer::longValue)
                 .sum();
+    }
+
+    private Comparator<Clothes> clothesComparator() {
+        return Comparator
+                .comparing((Clothes clothes) -> clothes.getCategory(), CategoryOrder.comparator())
+                .thenComparing(Clothes::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()));
     }
 
     private long calculateWeeklyExpenseAmount(
