@@ -11,7 +11,10 @@ public class DailyReviewNotificationScheduler {
 
     private final DailyReviewPushSender dailyReviewPushSender;
 
-    @Scheduled(cron = "0 0 20 * * *", zone = "Asia/Seoul")
+    @Scheduled(
+            cron = "${notification.daily-review.cron:0 0 20 * * *}",
+            zone = "${notification.time-zone:Asia/Seoul}"
+    )
     public void sendDailyReviewReminder() {
         dailyReviewPushSender.sendDailyReviewReminder();
     }

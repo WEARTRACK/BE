@@ -13,6 +13,10 @@ java {
 	}
 }
 
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
@@ -47,6 +51,9 @@ dependencies {
 
 	implementation 'org.springframework.retry:spring-retry'
 	implementation 'org.springframework:spring-aspects'
+
+	// Firebase Cloud Messaging
+	implementation 'com.google.firebase:firebase-admin:9.9.0'
 
 	// prometheus
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
