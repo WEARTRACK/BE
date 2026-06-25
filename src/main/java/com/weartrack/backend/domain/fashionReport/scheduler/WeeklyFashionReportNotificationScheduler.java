@@ -30,7 +30,7 @@ public class WeeklyFashionReportNotificationScheduler {
         LocalDate reportWeekEndDate = reportWeekStartDate.plusDays(6);
 
         log.info(
-                "Weekly fashion report notification requested. weekStartDate={}, weekEndDate={}",
+                "주간 패션 리포트 알림을 요청합니다. weekStartDate={}, weekEndDate={}",
                 reportWeekStartDate,
                 reportWeekEndDate
         );
