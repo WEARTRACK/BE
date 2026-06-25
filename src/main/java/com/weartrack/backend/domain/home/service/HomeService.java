@@ -2,9 +2,22 @@ package com.weartrack.backend.domain.home.service;
 
 import com.weartrack.backend.domain.closet.repository.ClosetRepository;
 import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
+import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
-import com.weartrack.backend.domain.home.dto.HomeSummaryResDto;
-import java.time.LocalDateTime;
+import com.weartrack.backend.domain.clothes.util.CategoryOrder;
+import com.weartrack.backend.domain.dailyReview.entity.DailyReview;
+import com.weartrack.backend.domain.dailyReview.repository.DailyReviewRepository;
+import com.weartrack.backend.domain.home.dto.response.HomeSummaryResDto;
+import com.weartrack.backend.domain.home.dto.response.HomeWeeklyClosetUsageAnalysisResDto;
+import com.weartrack.backend.domain.home.dto.response.HomeWeeklyWornClothesResDto;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,25 +27,43 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class HomeService {
 
-    private static final int TEMP_WEEKLY_CLOSET_USAGE_RATE = 73;
+    private static final ZoneId SEOUL_ZONE = ZoneId.of("Asia/Seoul");
+    private static final String MASTER_TYPE = "MASTER";
+    private static final String ACTIVE_TYPE = "ACTIVE";
+    private static final String POTENTIAL_TYPE = "POTENTIAL";
+    private static final String NEGLECTED_TYPE = "NEGLECTED";
 
     private final ClothesRepository clothesRepository;
+    private final DailyReviewRepository dailyReviewRepository;
     private final ClosetRepository closetRepository;
     private final ClosetSectionRepository closetSectionRepository;
 
     public HomeSummaryResDto getHomeSummary(Long memberId) {
-        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+        LocalDate weekStartDate = getCurrentWeekStartDate();
+        LocalDate weekEndDate = weekStartDate.plusDays(6);
 
-        long totalClothesCount = clothesRepository.countByMemberId(memberId);
-        long weeklyExpenseAmount = clothesRepository.sumWeeklyExpenseAmount(memberId, oneWeekAgo);
+        List<Clothes> clothes = clothesRepository.findAllByMemberId(memberId);
+        long totalClothesCount = clothes.size();
+        long weeklyExpenseAmount = calculateWeeklyExpenseAmount(
+                clothes,
+                weekStartDate,
+                weekEndDate
+        );
+        Set<Long> weeklyWornClothesIds = getWeeklyWornClothesIds(
+                memberId,
+                weekStartDate,
+                weekEndDate
+        );
+        long weeklyWornClothesCount = clothes.stream()
+                .filter(clothesItem -> weeklyWornClothesIds.contains(clothesItem.getId()))
+                .count();
 
         long closetCount = closetRepository.countByMemberId(memberId);
         long storageCount = closetSectionRepository.countByMemberId(memberId);
 
         int weeklyClosetUsageRate = calculateWeeklyClosetUsageRate(
                 totalClothesCount,
-                closetCount,
-                storageCount
+                weeklyWornClothesCount
         );
 
         return new HomeSummaryResDto(
@@ -44,15 +75,175 @@ public class HomeService {
         );
     }
 
+    public HomeWeeklyClosetUsageAnalysisResDto getWeeklyClosetUsageAnalysis(Long memberId) {
+        LocalDate today = LocalDate.now(SEOUL_ZONE);
+        LocalDate weekStartDate = getCurrentWeekStartDate();
+        LocalDate weekEndDate = weekStartDate.plusDays(6);
+
+        List<Clothes> clothes = clothesRepository.findAllByMemberId(memberId);
+        Set<Long> activeClothesIds = clothes.stream()
+                .map(Clothes::getId)
+                .collect(Collectors.toSet());
+        long totalClothesCount = clothes.size();
+        long weeklyWornClothesCount = getWeeklyWornClothesIds(
+                memberId,
+                weekStartDate,
+                weekEndDate
+        ).stream()
+                .filter(activeClothesIds::contains)
+                .count();
+        int weeklyClosetUsageRate = calculateWeeklyClosetUsageRate(
+                totalClothesCount,
+                weeklyWornClothesCount
+        );
+
+        long todayWornClothesCount = countDailyWornClothes(
+                memberId,
+                today,
+                activeClothesIds
+        );
+        long unwornClothesCount = Math.max(totalClothesCount - todayWornClothesCount, 0);
+
+        return new HomeWeeklyClosetUsageAnalysisResDto(
+                weekStartDate,
+                weekEndDate,
+                weeklyClosetUsageRate,
+                getClosetUsageType(weeklyClosetUsageRate),
+                unwornClothesCount
+        );
+    }
+
+    public HomeWeeklyWornClothesResDto getWeeklyWornClothes(Long memberId) {
+        LocalDate weekStartDate = getCurrentWeekStartDate();
+        LocalDate weekEndDate = weekStartDate.plusDays(6);
+
+        List<Clothes> clothes = clothesRepository.findAllByMemberId(memberId);
+        Set<Long> weeklyWornClothesIds = getWeeklyWornClothesIds(
+                memberId,
+                weekStartDate,
+                weekEndDate
+        );
+        List<Clothes> weeklyWornClothes = clothes.stream()
+                .filter(clothesItem -> weeklyWornClothesIds.contains(clothesItem.getId()))
+                .sorted(clothesComparator())
+                .toList();
+
+        int weeklyClosetUsageRate = calculateWeeklyClosetUsageRate(
+                clothes.size(),
+                weeklyWornClothes.size()
+        );
+
+        return new HomeWeeklyWornClothesResDto(
+                weeklyClosetUsageRate,
+                getClosetUsageType(weeklyClosetUsageRate),
+                weeklyWornClothes.size(),
+                calculateTotalPrice(weeklyWornClothes),
+                toWornClothesItems(weeklyWornClothes)
+        );
+    }
+
+    private Set<Long> getWeeklyWornClothesIds(
+            Long memberId,
+            LocalDate weekStartDate,
+            LocalDate weekEndDate
+    ) {
+        return dailyReviewRepository
+                .findAllByMemberIdAndReviewDateBetween(memberId, weekStartDate, weekEndDate)
+                .stream()
+                .filter(DailyReview::isCompleted)
+                .flatMap(review -> review.getItems().stream())
+                .map(item -> item.getClothesId())
+                .collect(Collectors.toSet());
+    }
+
     private int calculateWeeklyClosetUsageRate(
             long totalClothesCount,
-            long closetCount,
-            long storageCount
+            long weeklyWornClothesCount
     ) {
-        if (totalClothesCount == 0 || closetCount == 0 || storageCount == 0) {
+        if (totalClothesCount == 0) {
             return 0;
         }
 
-        return TEMP_WEEKLY_CLOSET_USAGE_RATE;
+        return (int) Math.round((weeklyWornClothesCount * 100.0) / totalClothesCount);
+    }
+
+    private long countDailyWornClothes(
+            Long memberId,
+            LocalDate reviewDate,
+            Set<Long> activeClothesIds
+    ) {
+        return dailyReviewRepository.findByMemberIdAndReviewDate(memberId, reviewDate)
+                .filter(DailyReview::isCompleted)
+                .map(review -> review.getItems().stream()
+                        .map(item -> item.getClothesId())
+                        .filter(activeClothesIds::contains)
+                        .distinct()
+                        .count())
+                .orElse(0L);
+    }
+
+    private List<HomeWeeklyWornClothesResDto.WornClothesItem> toWornClothesItems(
+            List<Clothes> clothes
+    ) {
+        return clothes.stream()
+                .map(clothesItem -> new HomeWeeklyWornClothesResDto.WornClothesItem(
+                        clothesItem.getId(),
+                        clothesItem.getImageUrl(),
+                        clothesItem.getPrice()
+                ))
+                .toList();
+    }
+
+    private long calculateTotalPrice(List<Clothes> clothes) {
+        return clothes.stream()
+                .map(Clothes::getPrice)
+                .filter(price -> price != null)
+                .mapToLong(Integer::longValue)
+                .sum();
+    }
+
+    private Comparator<Clothes> clothesComparator() {
+        return Comparator
+                .comparing((Clothes clothes) -> clothes.getCategory(), CategoryOrder.comparator())
+                .thenComparing(Clothes::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()));
+    }
+
+    private long calculateWeeklyExpenseAmount(
+            List<Clothes> clothes,
+            LocalDate weekStartDate,
+            LocalDate weekEndDate
+    ) {
+        return clothes.stream()
+                .filter(clothesItem -> clothesItem.getCreatedAt() != null)
+                .filter(clothesItem -> {
+                    // TODO: 저장 시각 정책 정리 후 notification.time-zone 기준 날짜로 변환해 주간 지출을 집계한다.
+                    LocalDate createdDate = clothesItem.getCreatedAt().toLocalDate();
+                    return !createdDate.isBefore(weekStartDate) && !createdDate.isAfter(weekEndDate);
+                })
+                .map(Clothes::getPrice)
+                .filter(price -> price != null)
+                .mapToLong(Integer::longValue)
+                .sum();
+    }
+
+    private String getClosetUsageType(int usageRate) {
+        if (usageRate >= 81) {
+            return MASTER_TYPE;
+        }
+
+        if (usageRate >= 51) {
+            return ACTIVE_TYPE;
+        }
+
+        if (usageRate >= 21) {
+            return POTENTIAL_TYPE;
+        }
+
+        return NEGLECTED_TYPE;
+    }
+
+    private LocalDate getCurrentWeekStartDate() {
+        return LocalDate.now(SEOUL_ZONE)
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
     }
 }

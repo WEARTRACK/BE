@@ -10,6 +10,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -66,6 +67,23 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 경로 변수와 요청 파라미터의 타입 변환 실패를 처리한다.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatchException(
+            MethodArgumentTypeMismatchException e
+    ) {
+        GlobalErrorCode errorCode = GlobalErrorCode.BAD_REQUEST;
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.failure(
+                        errorCode.getCode(),
+                        "요청 값의 형식이 올바르지 않습니다.",
+                        null
+                ));
+    }
+
+    /**
      * 지원하지 않는 HTTP 메서드 요청을 처리한다.
      */
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -81,7 +99,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(NoResourceFoundException e) {
-        log.debug("No resource found: {}", e.getResourcePath());
+        log.debug("리소스를 찾을 수 없습니다.: {}", e.getResourcePath());
 
         GlobalErrorCode errorCode = GlobalErrorCode.NOT_FOUND;
         return ResponseEntity
@@ -94,7 +112,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleAllException(Exception e) {
-        log.error("Unhandled Exception: ", e);
+        log.error("처리되지 않은 예외: ", e);
 
         GlobalErrorCode errorCode = GlobalErrorCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity

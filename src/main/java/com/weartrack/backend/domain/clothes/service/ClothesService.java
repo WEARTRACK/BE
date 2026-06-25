@@ -11,7 +11,6 @@ import com.weartrack.backend.domain.clothes.dto.response.ClothesDetailResDto;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesFilterResDto;
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;
-import com.weartrack.backend.domain.clothes.entity.ImageStorageType;
 import com.weartrack.backend.domain.clothes.exception.ClothesErrorCode;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
@@ -19,7 +18,6 @@ import com.weartrack.backend.domain.onboarding.entity.QuestType;
 import com.weartrack.backend.domain.onboarding.service.OnboardingService;
 import com.weartrack.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -38,7 +35,6 @@ public class ClothesService {
     private final ClothesRepository clothesRepository;
     private final ClothesPhotoRepository clothesPhotoRepository;
     private final ClosetSectionRepository closetSectionRepository;
-    private final S3StorageService s3StorageService;
     private final OnboardingService onboardingService;
 
     @Transactional
@@ -97,7 +93,7 @@ public class ClothesService {
     }
 
     public ClothesDetailResDto getClothesDetail(Long memberId, Long clothesId) {
-        Clothes clothes = clothesRepository.findById(clothesId)
+        Clothes clothes = clothesRepository.findActiveById(clothesId)
                 .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
 
         ClosetSection section = closetSectionRepository.findById(clothes.getClosetSectionId())
@@ -114,7 +110,7 @@ public class ClothesService {
     public ClothesDetailResDto updateClothes(
             Long memberId, Long clothesId, ClothesUpdateRequest request
     ) {
-        Clothes clothes = clothesRepository.findById(clothesId)
+        Clothes clothes = clothesRepository.findActiveById(clothesId)
                 .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
 
         ClosetSection currentSection = closetSectionRepository.findById(clothes.getClosetSectionId())
@@ -159,7 +155,7 @@ public class ClothesService {
 
     @Transactional
     public void deleteClothes(Long memberId, Long clothesId) {
-        Clothes clothes = clothesRepository.findById(clothesId)
+        Clothes clothes = clothesRepository.findActiveById(clothesId)
                 .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
 
         ClosetSection section = closetSectionRepository.findById(clothes.getClosetSectionId())
@@ -169,18 +165,8 @@ public class ClothesService {
             throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
         }
 
-        clothesPhotoRepository.findById(clothes.getClothesPhotoId())
-                .filter(photo -> photo.getImageStorageType() == ImageStorageType.USER_UPLOAD)
-                .ifPresent(photo -> {
-                    try {
-                        s3StorageService.deleteByUrl(photo.getImageUrl());
-                    } catch (Exception e) {
-                        log.warn("S3 image delete failed. clothesId={}, imageUrl={}",
-                                clothesId, photo.getImageUrl(), e);
-                    }
-                });
-
-        clothesRepository.delete(clothes);
+        // 과거 회고와 리포트의 옷 정보 및 이미지를 보존하기 위해 Soft Delete 처리한다.
+        clothes.delete();
         section.decreaseClothesCount();
     }
 
