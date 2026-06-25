@@ -15,6 +15,15 @@ public class FirebaseConfig {
 
     @Bean
     public FirebaseApp firebaseApp() throws IOException {
+        FirebaseApp existingApp = FirebaseApp.getApps().stream()
+                .filter(app -> FirebaseApp.DEFAULT_APP_NAME.equals(app.getName()))
+                .findFirst()
+                .orElse(null);
+
+        if (existingApp != null) {
+            return existingApp;
+        }
+
         FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.getApplicationDefault())
                 .build();

@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,12 +48,14 @@ public class FashionConsumptionReportController {
     @GetMapping("/monthly/{yearMonth}")
     public ApiResponse<MonthlyFashionConsumptionReportResDto> getMonthlyReport(
             @AuthenticationPrincipal JwtPrincipal principal,
-            @PathVariable String yearMonth
+            @PathVariable
+            @DateTimeFormat(pattern = "yyyy-MM")
+            YearMonth yearMonth
     ) {
         return ApiResponse.success(
                 monthlyFashionConsumptionReportService.getMonthlyReport(
                         principal.memberId(),
-                        YearMonth.parse(yearMonth)
+                        yearMonth
                 )
         );
     }
