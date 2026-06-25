@@ -39,7 +39,8 @@ public class FashionConsumptionReportService {
             LocalDate weekStartDate
     ) {
         LocalDate weekEndDate = weekStartDate.plusDays(6);
-        List<Clothes> clothes = clothesRepository.findAllByMemberId(memberId);
+        List<Clothes> clothes =
+                clothesRepository.findAllIncludingDeletedByMemberId(memberId);
 
         List<Clothes> targetWeekClothes = filterClothesRegisteredBetween(
                 clothes,
@@ -79,7 +80,7 @@ public class FashionConsumptionReportService {
         String normalizedCategory = CategoryOrder.normalize(category);
 
         List<Clothes> categoryClothes = filterClothesRegisteredBetween(
-                clothesRepository.findAllByMemberId(memberId),
+                clothesRepository.findAllIncludingDeletedByMemberId(memberId),
                 weekStartDate,
                 weekEndDate
         ).stream()
