@@ -114,6 +114,7 @@ public class FashionConsumptionReportService {
         return clothes.stream()
                 .filter(clothesItem -> clothesItem.getCreatedAt() != null)
                 .filter(clothesItem -> {
+                    // TODO: 저장 시각 정책 정리 후 notification.time-zone 기준 날짜로 변환해 주차를 분류한다.
                     LocalDate createdDate = clothesItem.getCreatedAt().toLocalDate();
                     return !createdDate.isBefore(startDate) && !createdDate.isAfter(endDate);
                 })
