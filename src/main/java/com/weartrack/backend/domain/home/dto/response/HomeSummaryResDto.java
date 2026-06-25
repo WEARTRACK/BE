@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.home.dto;
+package com.weartrack.backend.domain.home.dto.response;
 
 public record HomeSummaryResDto(
         long totalClothesCount,

@@ -70,6 +70,18 @@ ai:
   base-url: ${AI_BASE_URL}
   closet-base-url: ${AI_CLOSET_BASE_URL}
 
+firebase:
+  enabled: ${FIREBASE_ENABLED:false}
+  daily-review-topic: ${FIREBASE_DAILY_REVIEW_TOPIC:daily-review-reminder}
+  weekly-fashion-report-topic: ${FIREBASE_WEEKLY_FASHION_REPORT_TOPIC:weekly-fashion-report}
+
+notification:
+  time-zone: Asia/Seoul
+  daily-review:
+    cron: ${DAILY_REVIEW_NOTIFICATION_CRON:0 0 20 * * *}
+  weekly-fashion-report:
+    cron: ${WEEKLY_FASHION_REPORT_NOTIFICATION_CRON:0 0 21 * * SUN}
+
 logging:
   level:
     root: INFO

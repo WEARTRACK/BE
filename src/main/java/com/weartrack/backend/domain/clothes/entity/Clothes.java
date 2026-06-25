@@ -52,8 +52,12 @@ public class Clothes {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @PrePersist
     public void prePersist() {
+        // TODO: 서버 기본 타임존에 의존하지 않도록 생성·수정 시각을 Instant 또는 설정 타임존 기준으로 통일한다.
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -85,5 +89,9 @@ public class Clothes {
         if (sectionId != null) {
             this.closetSectionId = sectionId;
         }
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }
