@@ -5,6 +5,7 @@ import com.weartrack.backend.global.exception.code.GlobalErrorCode;
 import com.weartrack.backend.global.response.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -79,6 +80,20 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure(
                         errorCode.getCode(),
                         "요청 값의 형식이 올바르지 않습니다.",
+                        null
+                ));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMessageNotReadableException(
+            HttpMessageNotReadableException e
+    ) {
+        GlobalErrorCode errorCode = GlobalErrorCode.BAD_REQUEST;
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.failure(
+                        errorCode.getCode(),
+                        "요청 본문의 JSON 형식이 올바르지 않습니다.",
                         null
                 ));
     }

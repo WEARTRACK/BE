@@ -16,7 +16,7 @@ public class DailyReviewPushNotificationSender implements DailyReviewPushSender 
     private static final Map<String, String> DATA = Map.of(
             "type", "DAILY_REVIEW_REMINDER",
             "screen", "DAILY_REVIEW",
-            "apiPath", "/api/daily-reviews/current"
+            "apiPath", "/api/daily-reviews/today"
     );
 
     private final FcmMessageSender fcmMessageSender;
