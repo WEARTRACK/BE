@@ -5,7 +5,6 @@ import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
 import com.weartrack.backend.domain.clothes.util.CategoryOrder;
 import com.weartrack.backend.domain.dailyReview.dto.request.DailyReviewSaveReqDto;
 import com.weartrack.backend.domain.dailyReview.dto.response.DailyReviewEntryResDto;
-import com.weartrack.backend.domain.dailyReview.dto.response.DailyReviewSaveResDto;
 import com.weartrack.backend.domain.dailyReview.entity.DailyReview;
 import com.weartrack.backend.domain.dailyReview.exception.DailyReviewErrorCode;
 import com.weartrack.backend.domain.dailyReview.repository.DailyReviewRepository;
@@ -40,7 +39,7 @@ public class DailyReviewService {
         return getReview(memberId, LocalDate.now(SEOUL_ZONE));
     }
 
-    public DailyReviewEntryResDto getReview(Long memberId, LocalDate reviewDate) {
+    private DailyReviewEntryResDto getReview(Long memberId, LocalDate reviewDate) {
         LocalDate weekStartDate = getWeekStartDate(reviewDate);
         LocalDate weekEndDate = weekStartDate.plusDays(6);
         List<Clothes> clothes = clothesRepository.findAllByMemberId(memberId);
@@ -79,11 +78,11 @@ public class DailyReviewService {
     }
 
     @Transactional
-    public DailyReviewSaveResDto saveReview(
+    public WeeklyReviewSummaryResDto saveTodayReview(
             Long memberId,
-            LocalDate reviewDate,
             DailyReviewSaveReqDto request
     ) {
+        LocalDate reviewDate = LocalDate.now(SEOUL_ZONE);
         List<Long> clothesIds = request.clothesIds().stream()
                 .distinct()
                 .toList();
@@ -107,19 +106,12 @@ public class DailyReviewService {
                         .build());
 
         review.complete(clothesIds);
-        DailyReview savedReview = dailyReviewRepository.save(review);
+        dailyReviewRepository.save(review);
 
         LocalDate weekStartDate = getWeekStartDate(reviewDate);
-        WeeklyReviewSummaryResDto weeklyReview = weeklyReviewService.getReviewSummary(
+        return weeklyReviewService.getReviewSummary(
                 memberId,
                 weekStartDate
-        );
-
-        return new DailyReviewSaveResDto(
-                savedReview.getReviewDate(),
-                savedReview.getItems().size(),
-                savedReview.getItems().isEmpty(),
-                weeklyReview
         );
     }
 

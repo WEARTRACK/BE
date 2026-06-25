@@ -28,7 +28,7 @@ class DailyReviewPushNotificationSenderTest {
         assertThat(fcmMessageSender.data).isEqualTo(Map.of(
                 "type", "DAILY_REVIEW_REMINDER",
                 "screen", "DAILY_REVIEW",
-                "apiPath", "/api/daily-reviews/current"
+                "apiPath", "/api/daily-reviews/today"
         ));
     }
 
