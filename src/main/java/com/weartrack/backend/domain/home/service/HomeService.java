@@ -49,11 +49,14 @@ public class HomeService {
                 weekStartDate,
                 weekEndDate
         );
-        long weeklyWornClothesCount = getWeeklyWornClothesIds(
+        Set<Long> weeklyWornClothesIds = getWeeklyWornClothesIds(
                 memberId,
                 weekStartDate,
                 weekEndDate
-        ).size();
+        );
+        long weeklyWornClothesCount = clothes.stream()
+                .filter(clothesItem -> weeklyWornClothesIds.contains(clothesItem.getId()))
+                .count();
 
         long closetCount = closetRepository.countByMemberId(memberId);
         long storageCount = closetSectionRepository.countByMemberId(memberId);
@@ -77,19 +80,28 @@ public class HomeService {
         LocalDate weekStartDate = getCurrentWeekStartDate();
         LocalDate weekEndDate = weekStartDate.plusDays(6);
 
-        long totalClothesCount = clothesRepository.findAllByMemberId(memberId).size();
-        long weeklyWornClothesCount = dailyReviewRepository
-                .countDistinctWornClothesByMemberIdAndReviewDateBetween(
-                        memberId,
-                        weekStartDate,
-                        weekEndDate
-                );
+        List<Clothes> clothes = clothesRepository.findAllByMemberId(memberId);
+        Set<Long> activeClothesIds = clothes.stream()
+                .map(Clothes::getId)
+                .collect(Collectors.toSet());
+        long totalClothesCount = clothes.size();
+        long weeklyWornClothesCount = getWeeklyWornClothesIds(
+                memberId,
+                weekStartDate,
+                weekEndDate
+        ).stream()
+                .filter(activeClothesIds::contains)
+                .count();
         int weeklyClosetUsageRate = calculateWeeklyClosetUsageRate(
                 totalClothesCount,
                 weeklyWornClothesCount
         );
 
-        long todayWornClothesCount = countDailyWornClothes(memberId, today);
+        long todayWornClothesCount = countDailyWornClothes(
+                memberId,
+                today,
+                activeClothesIds
+        );
         long unwornClothesCount = Math.max(totalClothesCount - todayWornClothesCount, 0);
 
         return new HomeWeeklyClosetUsageAnalysisResDto(
@@ -118,13 +130,13 @@ public class HomeService {
 
         int weeklyClosetUsageRate = calculateWeeklyClosetUsageRate(
                 clothes.size(),
-                weeklyWornClothesIds.size()
+                weeklyWornClothes.size()
         );
 
         return new HomeWeeklyWornClothesResDto(
                 weeklyClosetUsageRate,
                 getClosetUsageType(weeklyClosetUsageRate),
-                weeklyWornClothesIds.size(),
+                weeklyWornClothes.size(),
                 calculateTotalPrice(weeklyWornClothes),
                 toWornClothesItems(weeklyWornClothes)
         );
@@ -155,11 +167,16 @@ public class HomeService {
         return (int) Math.round((weeklyWornClothesCount * 100.0) / totalClothesCount);
     }
 
-    private long countDailyWornClothes(Long memberId, LocalDate reviewDate) {
+    private long countDailyWornClothes(
+            Long memberId,
+            LocalDate reviewDate,
+            Set<Long> activeClothesIds
+    ) {
         return dailyReviewRepository.findByMemberIdAndReviewDate(memberId, reviewDate)
                 .filter(DailyReview::isCompleted)
                 .map(review -> review.getItems().stream()
                         .map(item -> item.getClothesId())
+                        .filter(activeClothesIds::contains)
                         .distinct()
                         .count())
                 .orElse(0L);
@@ -199,6 +216,7 @@ public class HomeService {
         return clothes.stream()
                 .filter(clothesItem -> clothesItem.getCreatedAt() != null)
                 .filter(clothesItem -> {
+                    // TODO: 저장 시각 정책 정리 후 notification.time-zone 기준 날짜로 변환해 주간 지출을 집계한다.
                     LocalDate createdDate = clothesItem.getCreatedAt().toLocalDate();
                     return !createdDate.isBefore(weekStartDate) && !createdDate.isAfter(weekEndDate);
                 })

@@ -81,7 +81,10 @@ public class ProductLinkService {
         urlSafetyValidator.validate(request.imageUrl());
         SourceShop sourceShop = sourceShopResolver.resolve(normalizedSourceUrl);
 
-        if (clothesPhotoRepository.existsByMemberIdAndSourceUrl(memberId, normalizedSourceUrl)) {
+        if (clothesRepository.existsActiveClothesByMemberIdAndSourceUrl(
+                memberId,
+                normalizedSourceUrl
+        )) {
             throw new GeneralException(ClothesErrorCode.PRODUCT_LINK_DUPLICATED);
         }
 

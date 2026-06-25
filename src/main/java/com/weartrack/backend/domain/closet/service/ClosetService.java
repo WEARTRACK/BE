@@ -132,7 +132,11 @@ public class ClosetService {
         if (!section.getCloset().getClosetId().equals(closetId)) {
             throw new GeneralException(ClosetErrorCode.SECTION_NOT_IN_CLOSET);
         }
-        Page<Clothes> page = clothesRepository.findByClosetSectionIdOrderByCreatedAtDesc(sectionId,pageable);
+        Page<Clothes> page =
+                clothesRepository.findByClosetSectionIdAndDeletedAtIsNullOrderByCreatedAtDesc(
+                        sectionId,
+                        pageable
+                );
 
         return ClothesListResDto.from(section, page);
     }

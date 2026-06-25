@@ -13,8 +13,6 @@ import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -56,28 +54,13 @@ public class DailyReview extends BaseTimeEntity {
         this.completed = false;
     }
 
-    public void replaceItems(List<Long> clothesIds) {
-        this.items.clear();
+    public void complete(List<Long> clothesIds) {
         clothesIds.forEach(clothesId ->
                 this.items.add(DailyReviewItem.builder()
                         .dailyReview(this)
                         .clothesId(clothesId)
                         .build())
         );
-        this.completed = true;
-    }
-
-    public void addItems(List<Long> clothesIds) {
-        Set<Long> existingClothesIds = this.items.stream()
-                .map(DailyReviewItem::getClothesId)
-                .collect(Collectors.toSet());
-
-        clothesIds.stream()
-                .filter(clothesId -> !existingClothesIds.contains(clothesId))
-                .forEach(clothesId -> this.items.add(DailyReviewItem.builder()
-                        .dailyReview(this)
-                        .clothesId(clothesId)
-                        .build()));
 
         this.completed = true;
     }

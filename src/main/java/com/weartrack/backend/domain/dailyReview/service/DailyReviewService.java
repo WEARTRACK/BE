@@ -92,12 +92,21 @@ public class DailyReviewService {
 
         DailyReview review = dailyReviewRepository
                 .findByMemberIdAndReviewDate(memberId, reviewDate)
+                .map(existingReview -> {
+                    if (existingReview.isCompleted()) {
+                        throw new GeneralException(
+                                DailyReviewErrorCode.DAILY_REVIEW_ALREADY_EXISTS
+                        );
+                    }
+
+                    return existingReview;
+                })
                 .orElseGet(() -> DailyReview.builder()
                         .memberId(memberId)
                         .reviewDate(reviewDate)
                         .build());
 
-        review.addItems(clothesIds);
+        review.complete(clothesIds);
         DailyReview savedReview = dailyReviewRepository.save(review);
 
         LocalDate weekStartDate = getWeekStartDate(reviewDate);

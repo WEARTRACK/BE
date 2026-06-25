@@ -35,7 +35,7 @@ public class WeeklyReviewService {
 
     public WeeklyReviewSummaryResDto getReviewSummary(Long memberId, LocalDate weekStartDate) {
         LocalDate weekEndDate = weekStartDate.plusDays(6);
-        List<Clothes> clothes = clothesRepository.findAllByMemberId(memberId);
+        List<Clothes> clothes = getClothesOwnedAt(memberId, weekEndDate);
 
         Set<Long> wornClothesIds = getWornClothesIds(memberId, weekStartDate, weekEndDate);
 
@@ -55,15 +55,15 @@ public class WeeklyReviewService {
                 .map(entry -> toCategoryGroup(entry.getKey(), entry.getValue()))
                 .toList();
 
+        int wornClothesCount = wornClothes.size();
         long totalClothesCount = clothes.size();
-        int usageRate = calculateUsageRate(wornClothesIds.size(), totalClothesCount);
-        String weeklyInsight =
-                createWeeklyInsight(memberId, weekStartDate, totalClothesCount, usageRate);
+        int usageRate = calculateUsageRate(wornClothesCount, totalClothesCount);
+        String weeklyInsight = createWeeklyInsight(memberId, weekStartDate, usageRate);
 
         return new WeeklyReviewSummaryResDto(
                 weekStartDate,
                 weekEndDate,
-                wornClothesIds.size(),
+                wornClothesCount,
                 usageRate,
                 weeklyInsight,
                 categories
@@ -98,18 +98,41 @@ public class WeeklyReviewService {
     private String createWeeklyInsight(
             Long memberId,
             LocalDate weekStartDate,
-            long totalClothesCount,
             int usageRate
     ) {
         LocalDate previousWeekStartDate = weekStartDate.minusWeeks(1);
         LocalDate previousWeekEndDate = previousWeekStartDate.plusDays(6);
+        List<Clothes> previousWeekClothes =
+                getClothesOwnedAt(memberId, previousWeekEndDate);
+        Set<Long> previousWeekWornClothesIds =
+                getWornClothesIds(memberId, previousWeekStartDate, previousWeekEndDate);
+        long previousWeekWornClothesCount = previousWeekClothes.stream()
+                .filter(clothes -> previousWeekWornClothesIds.contains(clothes.getId()))
+                .count();
         int previousWeekUsageRate = calculateUsageRate(
-                getWornClothesIds(memberId, previousWeekStartDate, previousWeekEndDate).size(),
-                totalClothesCount
+                previousWeekWornClothesCount,
+                previousWeekClothes.size()
         );
         int usageRateChange = usageRate - previousWeekUsageRate;
 
         return createInsightMessage(usageRateChange);
+    }
+
+    private List<Clothes> getClothesOwnedAt(Long memberId, LocalDate targetDate) {
+        return clothesRepository.findAllIncludingDeletedByMemberId(memberId)
+                .stream()
+                .filter(clothes -> wasOwnedAt(clothes, targetDate))
+                .toList();
+    }
+
+    private boolean wasOwnedAt(Clothes clothes, LocalDate targetDate) {
+        if (clothes.getCreatedAt() == null
+                || clothes.getCreatedAt().toLocalDate().isAfter(targetDate)) {
+            return false;
+        }
+
+        return clothes.getDeletedAt() == null
+                || clothes.getDeletedAt().toLocalDate().isAfter(targetDate);
     }
 
     private String createInsightMessage(int usageRateChange) {
