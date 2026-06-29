@@ -22,6 +22,8 @@ public class ClothesPhotoService {
     private final ClothesPhotoAnalysisAsyncService clothesPhotoAnalysisAsyncService;
 
     public ClothesPhotoCreateResponse uploadAndAnalyze(Long memberId, MultipartFile image) {
+        s3StorageService.validateImageForUpload(image);
+
         byte[] imageBytes = toBytes(image);
         String originalFilename = image.getOriginalFilename();
         String contentType = image.getContentType();
