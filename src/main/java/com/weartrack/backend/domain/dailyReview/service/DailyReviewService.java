@@ -39,7 +39,7 @@ public class DailyReviewService {
         return getReview(memberId, LocalDate.now(SEOUL_ZONE));
     }
 
-    private DailyReviewEntryResDto getReview(Long memberId, LocalDate reviewDate) {
+    public DailyReviewEntryResDto getReview(Long memberId, LocalDate reviewDate) {
         LocalDate weekStartDate = getWeekStartDate(reviewDate);
         LocalDate weekEndDate = weekStartDate.plusDays(6);
         List<Clothes> clothes = clothesRepository.findAllByMemberId(memberId);
@@ -82,7 +82,15 @@ public class DailyReviewService {
             Long memberId,
             DailyReviewSaveReqDto request
     ) {
-        LocalDate reviewDate = LocalDate.now(SEOUL_ZONE);
+        return saveReview(memberId, LocalDate.now(SEOUL_ZONE), request);
+    }
+
+    @Transactional
+    public WeeklyReviewSummaryResDto saveReview(
+            Long memberId,
+            LocalDate reviewDate,
+            DailyReviewSaveReqDto request
+    ) {
         List<Long> clothesIds = request.clothesIds().stream()
                 .distinct()
                 .toList();
@@ -91,15 +99,6 @@ public class DailyReviewService {
 
         DailyReview review = dailyReviewRepository
                 .findByMemberIdAndReviewDate(memberId, reviewDate)
-                .map(existingReview -> {
-                    if (existingReview.isCompleted()) {
-                        throw new GeneralException(
-                                DailyReviewErrorCode.DAILY_REVIEW_ALREADY_EXISTS
-                        );
-                    }
-
-                    return existingReview;
-                })
                 .orElseGet(() -> DailyReview.builder()
                         .memberId(memberId)
                         .reviewDate(reviewDate)

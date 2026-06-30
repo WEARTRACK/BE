@@ -119,7 +119,7 @@ public class WeeklyReviewService {
     }
 
     private List<Clothes> getClothesOwnedAt(Long memberId, LocalDate targetDate) {
-        return clothesRepository.findAllIncludingDeletedByMemberId(memberId)
+        return clothesRepository.findAllByMemberId(memberId)
                 .stream()
                 .filter(clothes -> wasOwnedAt(clothes, targetDate))
                 .toList();
@@ -131,8 +131,7 @@ public class WeeklyReviewService {
             return false;
         }
 
-        return clothes.getDeletedAt() == null
-                || clothes.getDeletedAt().toLocalDate().isAfter(targetDate);
+        return true;
     }
 
     private String createInsightMessage(int usageRateChange) {
