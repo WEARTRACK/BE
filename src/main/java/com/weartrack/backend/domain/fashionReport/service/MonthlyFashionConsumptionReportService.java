@@ -36,7 +36,7 @@ public class MonthlyFashionConsumptionReportService {
         LocalDate monthStartDate = yearMonth.atDay(1);
         LocalDate monthEndDate = yearMonth.atEndOfMonth();
         List<Clothes> clothes =
-                clothesRepository.findAllIncludingDeletedByMemberId(memberId);
+                clothesRepository.findAllByMemberId(memberId);
         List<Clothes> targetMonthClothes = filterClothesRegisteredBetween(
                 clothes,
                 monthStartDate,

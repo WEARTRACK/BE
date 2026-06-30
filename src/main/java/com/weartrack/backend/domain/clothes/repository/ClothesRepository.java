@@ -113,7 +113,7 @@ public interface ClothesRepository extends JpaRepository<Clothes, Long> {
     )
     AND c.deletedAt IS NULL
     AND (:color IS NULL OR c.color = :color)
-    AND (:category IS NULL OR c.category = :category)
+    AND (:category IS NULL OR REPLACE(REPLACE(UPPER(c.category), '-', '_'), ' ', '_') = :category)
     """)
     Page<Clothes> searchByMemberIdAndFilters(
             @Param("memberId") Long memberId,
