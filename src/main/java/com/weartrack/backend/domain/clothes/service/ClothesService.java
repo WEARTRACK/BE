@@ -14,6 +14,7 @@ import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;
 import com.weartrack.backend.domain.clothes.exception.ClothesErrorCode;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
+import com.weartrack.backend.domain.clothes.util.CategoryOrder;
 import com.weartrack.backend.domain.onboarding.entity.QuestType;
 import com.weartrack.backend.domain.onboarding.service.OnboardingService;
 import com.weartrack.backend.global.exception.GeneralException;
@@ -58,7 +59,7 @@ public class ClothesService {
                 .closetSectionId(section.getSectionId())
                 .imageUrl(clothesPhoto.getImageUrl())
                 .color(request.color())
-                .category(request.category())
+                .category(CategoryOrder.normalize(request.category()))
                 .price(request.price())
                 .build();
 
@@ -74,7 +75,7 @@ public class ClothesService {
             Long memberId, String color, String category, Pageable pageable
     ) {
         Page<Clothes> page = clothesRepository.searchByMemberIdAndFilters(
-                memberId, color, category, pageable
+                memberId, color, normalizeCategoryFilter(category), pageable
         );
 
         List<Long> sectionIds = page.getContent().stream()
@@ -186,12 +187,20 @@ public class ClothesService {
         );
     }
 
+    private String normalizeCategoryFilter(String category) {
+        if (category == null || category.isBlank()) {
+            return null;
+        }
+
+        return CategoryOrder.normalize(category);
+    }
+
     private void updateOnboardingQuestByCategory(Long memberId, String category) {
         if (category == null || category.isBlank()) {
             return;
         }
 
-        String normalizedCategory = category.trim().toLowerCase();
+        String normalizedCategory = CategoryOrder.normalize(category).toLowerCase();
 
         if (isTopCategory(normalizedCategory)) {
             onboardingService.completeQuest(memberId, QuestType.REGISTER_TOP, 1);
@@ -205,7 +214,7 @@ public class ClothesService {
 
     private boolean isTopCategory(String category) {
         return List.of(
-                "t-shirt",
+                "t_shirt",
                 "shirt",
                 "knit",
                 "hoodie",

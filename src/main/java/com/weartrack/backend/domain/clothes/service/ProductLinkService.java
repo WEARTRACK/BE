@@ -24,6 +24,7 @@ import com.weartrack.backend.domain.clothes.link.parser.CommonOgParser;
 import com.weartrack.backend.domain.clothes.link.parser.JsonLdParser;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
+import com.weartrack.backend.domain.clothes.util.CategoryOrder;
 import com.weartrack.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -65,7 +66,7 @@ public class ProductLinkService {
                 result.imageUrl(),
                 result.price(),
                 result.brandName(),
-                result.category(),
+                normalizeCategory(result.category()),
                 result.color(),
                 null
         );
@@ -102,7 +103,7 @@ public class ProductLinkService {
                 .sourceShop(sourceShop)
                 .sourceUrl(normalizedSourceUrl)
                 .analysisStatus(AnalysisStatus.SKIPPED)
-                .predictedCategory(request.category())
+                .predictedCategory(normalizeCategory(request.category()))
                 .predictedColor(request.color())
                 .build());
 
@@ -112,7 +113,7 @@ public class ProductLinkService {
                 .imageUrl(request.imageUrl())
                 .productName(request.productName())
                 .color(request.color())
-                .category(request.category())
+                .category(normalizeCategory(request.category()))
                 .price(request.price())
                 .purchaseDate(request.purchaseDate())
                 .storageLocation(request.storageLocation())
@@ -153,6 +154,14 @@ public class ProductLinkService {
                 clothes.getClosetSectionId(),
                 clothes.getCreatedAt()
         );
+    }
+
+    private String normalizeCategory(String category) {
+        if (category == null || category.isBlank()) {
+            return null;
+        }
+
+        return CategoryOrder.normalize(category);
     }
 
     private boolean isBlank(String value) {
