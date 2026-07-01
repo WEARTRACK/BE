@@ -6,7 +6,7 @@ import java.util.List;
 public final class CategoryOrder {
 
     private static final List<String> ORDERED_CATEGORIES = List.of(
-            "T-SHIRT",
+            "T_SHIRT",
             "SHIRT",
             "KNIT",
             "HOODIE",
@@ -52,7 +52,8 @@ public final class CategoryOrder {
 
         return category.trim()
                 .toUpperCase()
-                .replace(" ", "-")
+                .replace(" ", "_")
+                .replace("-", "_")
                 .replace("HODDIE", "HOODIE");
     }
 }

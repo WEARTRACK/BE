@@ -12,7 +12,9 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -55,12 +57,18 @@ public class DailyReview extends BaseTimeEntity {
     }
 
     public void complete(List<Long> clothesIds) {
-        clothesIds.forEach(clothesId ->
-                this.items.add(DailyReviewItem.builder()
+        Set<Long> selectedClothesIds = new HashSet<>(clothesIds);
+        this.items.removeIf(item -> !selectedClothesIds.contains(item.getClothesId()));
+
+        Set<Long> existingClothesIds = new HashSet<>();
+        this.items.forEach(item -> existingClothesIds.add(item.getClothesId()));
+
+        clothesIds.stream()
+                .filter(clothesId -> !existingClothesIds.contains(clothesId))
+                .forEach(clothesId -> this.items.add(DailyReviewItem.builder()
                         .dailyReview(this)
                         .clothesId(clothesId)
-                        .build())
-        );
+                        .build()));
 
         this.completed = true;
     }
