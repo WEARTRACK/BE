@@ -4,6 +4,7 @@ import com.weartrack.backend.domain.clothes.dto.ResultDto;
 import com.weartrack.backend.domain.clothes.dto.response.AiClothesPredictionResponse;
 import com.weartrack.backend.domain.clothes.entity.ClothesPhoto;
 import com.weartrack.backend.domain.clothes.repository.ClothesPhotoRepository;
+import com.weartrack.backend.domain.clothes.util.CategoryOrder;
 import com.weartrack.backend.domain.clothes.util.ColorMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,7 @@ public class ClothesPhotoAnalysisAsyncService {
             List<ResultDto> results = aiResult.results();
             ResultDto firstResult = results.get(0);
 
-            String predictedCategory = firstResult.category();
+            String predictedCategory = CategoryOrder.normalize(firstResult.category());
             String predictedColor = ColorMapper.toEnglish(firstResult.color());
 
             ClothesPhoto clothesPhoto = clothesPhotoRepository.findById(photoId)

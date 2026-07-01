@@ -1,9 +1,8 @@
 package com.weartrack.backend.domain.clothes.service;
 
-import com.weartrack.backend.domain.closet.exception.ClosetErrorCode;
-import com.weartrack.backend.global.exception.GeneralException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,12 +13,13 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.util.UUID;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3StorageService {
+
+    private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 
     private final S3Client s3Client;
 
@@ -35,6 +35,10 @@ public class S3StorageService {
 
     public SavedImage uploadClosetImage(MultipartFile image) {
         return upload(image, "closets");
+    }
+
+    public void validateImageForUpload(MultipartFile image) {
+        validateImage(image);
     }
 
     private SavedImage upload(MultipartFile image, String dirName) {
@@ -77,7 +81,6 @@ public class S3StorageService {
                 .build());
     }
 
-
     public void deleteByUrl(String imageUrl) {
         String key = extractKey(imageUrl);
         if (key != null) {
@@ -100,16 +103,24 @@ public class S3StorageService {
         if (imageUrl == null || imageUrl.isBlank()) {
             return null;
         }
+
         String marker = ".amazonaws.com/";
         int idx = imageUrl.indexOf(marker);
-        if (idx == -1) return null;
+
+        if (idx == -1) {
+            return null;
+        }
+
         return imageUrl.substring(idx + marker.length());
     }
-
 
     private void validateImage(MultipartFile image) {
         if (image == null || image.isEmpty()) {
             throw new IllegalArgumentException("이미지 파일은 필수입니다.");
+        }
+
+        if (image.getSize() > MAX_IMAGE_SIZE) {
+            throw new IllegalArgumentException("이미지 파일은 최대 10MB까지 업로드할 수 있습니다.");
         }
 
         String contentType = image.getContentType();
