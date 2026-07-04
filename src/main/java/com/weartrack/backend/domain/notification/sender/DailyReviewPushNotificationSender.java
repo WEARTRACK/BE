@@ -1,9 +1,11 @@
-package com.weartrack.backend.domain.dailyReview.notification;
+package com.weartrack.backend.domain.notification.sender;
 
+import com.weartrack.backend.domain.notification.entity.enums.NotificationType;
+import com.weartrack.backend.domain.notification.service.NotificationService;
 import com.weartrack.backend.global.firebase.service.FcmMessageSender;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -20,14 +22,14 @@ public class DailyReviewPushNotificationSender implements DailyReviewPushSender 
     );
 
     private final FcmMessageSender fcmMessageSender;
-
-    @Value("${firebase.daily-review-topic:daily-review-reminder}")
-    private String dailyReviewTopic;
+    private final NotificationService notificationService;
 
     @Override
     public void sendDailyReviewReminder() {
-        fcmMessageSender.sendToTopic(
-                dailyReviewTopic,
+        List<String> tokens = notificationService.findTokensEnabledFor(NotificationType.DAILY_REVIEW);
+
+        fcmMessageSender.sendToTokens(
+                tokens,
                 TITLE,
                 BODY,
                 DATA

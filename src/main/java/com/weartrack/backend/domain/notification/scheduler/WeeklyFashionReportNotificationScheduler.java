@@ -1,6 +1,6 @@
-package com.weartrack.backend.domain.fashionReport.scheduler;
+package com.weartrack.backend.domain.notification.scheduler;
 
-import com.weartrack.backend.domain.fashionReport.notification.WeeklyFashionReportPushSender;
+import com.weartrack.backend.domain.notification.sender.WeeklyFashionReportPushSender;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;

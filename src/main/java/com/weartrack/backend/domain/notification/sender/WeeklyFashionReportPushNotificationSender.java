@@ -1,10 +1,12 @@
-package com.weartrack.backend.domain.fashionReport.notification;
+package com.weartrack.backend.domain.notification.sender;
 
+import com.weartrack.backend.domain.notification.entity.enums.NotificationType;
+import com.weartrack.backend.domain.notification.service.NotificationService;
 import com.weartrack.backend.global.firebase.service.FcmMessageSender;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,9 +21,7 @@ public class WeeklyFashionReportPushNotificationSender
             "/api/fashion-consumption/reports/weekly/";
 
     private final FcmMessageSender fcmMessageSender;
-
-    @Value("${firebase.weekly-fashion-report-topic:weekly-fashion-report}")
-    private String weeklyFashionReportTopic;
+    private final NotificationService notificationService;
 
     @Override
     public void sendWeeklyFashionReport(
@@ -29,9 +29,10 @@ public class WeeklyFashionReportPushNotificationSender
             LocalDate weekEndDate
     ) {
         String weekStartDateValue = weekStartDate.toString();
+        List<String> tokens = notificationService.findTokensEnabledFor(NotificationType.FASHION_REPORT);
 
-        fcmMessageSender.sendToTopic(
-                weeklyFashionReportTopic,
+        fcmMessageSender.sendToTokens(
+                tokens,
                 TITLE,
                 BODY,
                 Map.of(

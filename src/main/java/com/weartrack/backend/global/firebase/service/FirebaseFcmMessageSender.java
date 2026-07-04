@@ -46,4 +46,32 @@ public class FirebaseFcmMessageSender implements FcmMessageSender {
             );
         }
     }
+
+    @Override
+    public void sendToToken(
+            String token,
+            String title,
+            String body,
+            Map<String, String> data
+    ) {
+        Message message = Message.builder()
+                .setToken(token)
+                .setNotification(Notification.builder()
+                        .setTitle(title)
+                        .setBody(body)
+                        .build())
+                .putAllData(data)
+                .build();
+
+        try {
+            String messageId = firebaseMessaging.send(message);
+            log.info("FCM 토큰 메시지 전송되었습니다. messageId={}", messageId);
+        } catch (FirebaseMessagingException e) {
+            log.error(
+                    "FCM 토큰 메시지 전송에 실패했습니다. errorCode={}",
+                    e.getMessagingErrorCode(),
+                    e
+            );
+        }
+    }
 }
