@@ -22,6 +22,8 @@ public interface ClothesRepository extends JpaRepository<Clothes, Long> {
         """)
     long countByMemberId(@Param("memberId") Long memberId);
 
+    long countByClosetSectionIdIn(List<Long> closetSectionIds);
+
     @Query("""
         SELECT COALESCE(SUM(c.price), 0L)
         FROM Clothes c

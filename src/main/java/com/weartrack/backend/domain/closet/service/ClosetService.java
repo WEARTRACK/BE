@@ -17,6 +17,8 @@ import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesListResDto;
 import com.weartrack.backend.domain.clothes.entity.Clothes;
 import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
+import com.weartrack.backend.domain.member.exception.MemberErrorCode;
+import com.weartrack.backend.domain.member.repository.MemberRepository;
 import com.weartrack.backend.domain.onboarding.entity.QuestType;
 import com.weartrack.backend.domain.onboarding.service.OnboardingService;
 import com.weartrack.backend.global.exception.GeneralException;
@@ -43,6 +45,7 @@ public class ClosetService {
     private final ClothesRepository clothesRepository;
     private final ClosetStatisticsMapper closetStatisticsMapper;
     private final OnboardingService onboardingService;
+    private final MemberRepository memberRepository;
 
     public ClosetCreateResDto createCloset(Long memberId, ClosetCreateReqDto request) {
         validateClosetLimit(memberId);
@@ -146,7 +149,7 @@ public class ClosetService {
                 .map(ClosetSection::getSectionId)
                 .toList();
 
-        long clothesCount = clothesRepository.countByClosetSectionIdInAndDeletedAtIsNull(sectionIds);
+        long clothesCount = clothesRepository.countByClosetSectionIdIn(sectionIds);
 
         if (clothesCount > 0) {
             throw new GeneralException(ClosetErrorCode.CLOSET_NOT_EMPTY);
@@ -156,6 +159,9 @@ public class ClosetService {
     }
 
     private void validateClosetLimit(Long memberId) {
+        memberRepository.findByMemberIdForUpdate(memberId)
+                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
+
         long closetCount = closetRepository.countByMemberId(memberId);
 
         if (closetCount >= MAX_CLOSET_COUNT) {

@@ -171,6 +171,14 @@ public class ClothesService {
             throw new GeneralException(ClosetErrorCode.SECTION_NOT_OWNED);
         }
 
+        boolean isMovingToDifferentCloset = !targetSection.getCloset()
+                .getClosetId()
+                .equals(currentSection.getCloset().getClosetId());
+
+        if (isMovingToDifferentCloset) {
+            validateClothesLimit(targetSection.getCloset().getClosetId());
+        }
+
         currentSection.decreaseClothesCount();
         targetSection.increaseClothesCount();
         clothes.moveToSection(targetSectionId);

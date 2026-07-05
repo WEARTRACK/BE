@@ -9,7 +9,5 @@ public interface ClosetRepository extends JpaRepository<Closet, Long> {
 
     long countByMemberId(Long memberId);
 
-    boolean existsByMemberId(Long memberId);
-
     List<Closet> findAllByMemberId(Long memberId);
 }
