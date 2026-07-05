@@ -5,7 +5,6 @@ import com.weartrack.backend.domain.notification.dto.request.FcmTokenDeleteReqDt
 import com.weartrack.backend.domain.notification.dto.request.FcmTokenRegisterReqDto;
 import com.weartrack.backend.domain.notification.dto.request.NotificationSettingUpdateReqDto;
 import com.weartrack.backend.domain.notification.dto.response.NotificationSettingResDto;
-import com.weartrack.backend.domain.notification.entity.MemberFcmToken;
 import com.weartrack.backend.domain.notification.entity.NotificationSetting;
 import com.weartrack.backend.domain.notification.entity.enums.NotificationType;
 import com.weartrack.backend.domain.notification.repository.MemberFcmTokenRepository;
@@ -16,6 +15,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +30,11 @@ public class NotificationService {
 
     @Transactional
     public void registerFcmToken(Long memberId, FcmTokenRegisterReqDto request) {
-        MemberFcmToken token = memberFcmTokenRepository.findByToken(request.token())
-                .orElseGet(() -> MemberFcmToken.builder()
-                        .memberId(memberId)
-                        .token(request.token())
-                        .deviceType(request.deviceType())
-                        .build());
-
-        token.updateOwner(memberId, request.deviceType());
-        memberFcmTokenRepository.save(token);
+        memberFcmTokenRepository.upsertToken(
+                memberId,
+                request.token(),
+                request.deviceTypeOrUnknown().name()
+        );
         getOrCreateSetting(memberId);
     }
 
@@ -81,8 +77,20 @@ public class NotificationService {
     }
 
     public List<String> findTokensEnabledFor(NotificationType type, List<Long> memberIds) {
+        return findTokenMapEnabledFor(type, memberIds)
+                .values()
+                .stream()
+                .flatMap(List::stream)
+                .distinct()
+                .toList();
+    }
+
+    public Map<Long, List<String>> findTokenMapEnabledFor(
+            NotificationType type,
+            List<Long> memberIds
+    ) {
         if (memberIds.isEmpty()) {
-            return List.of();
+            return Map.of();
         }
 
         Map<Long, NotificationSetting> settingMap = notificationSettingRepository
@@ -97,21 +105,37 @@ public class NotificationService {
                 .collect(Collectors.toSet());
 
         if (enabledMemberIds.isEmpty()) {
-            return List.of();
+            return Map.of();
         }
 
         return memberFcmTokenRepository.findAllByMemberIdIn(enabledMemberIds)
                 .stream()
-                .map(MemberFcmToken::getToken)
-                .distinct()
-                .toList();
+                .collect(Collectors.groupingBy(
+                        token -> token.getMemberId(),
+                        Collectors.mapping(
+                                token -> token.getToken(),
+                                Collectors.collectingAndThen(
+                                        Collectors.toSet(),
+                                        tokens -> tokens.stream().toList()
+                                )
+                        )
+                ));
     }
 
     @Transactional
     public NotificationSetting getOrCreateSetting(Long memberId) {
         return notificationSettingRepository.findByMemberId(memberId)
-                .orElseGet(() -> notificationSettingRepository.save(
-                        NotificationSetting.defaultFor(memberId)
-                ));
+                .orElseGet(() -> createSettingOrFindExisting(memberId));
+    }
+
+    private NotificationSetting createSettingOrFindExisting(Long memberId) {
+        try {
+            return notificationSettingRepository.saveAndFlush(
+                    NotificationSetting.defaultFor(memberId)
+            );
+        } catch (DataIntegrityViolationException e) {
+            return notificationSettingRepository.findByMemberId(memberId)
+                    .orElseThrow(() -> e);
+        }
     }
 }

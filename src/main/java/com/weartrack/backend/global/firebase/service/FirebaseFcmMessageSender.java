@@ -36,10 +36,10 @@ public class FirebaseFcmMessageSender implements FcmMessageSender {
 
         try {
             String messageId = firebaseMessaging.send(message);
-            log.info("FCM 토픽 메시지 전송되었습니다. topic={}, messageId={}", topic, messageId);
+            log.info("FCM topic message sent. topic={}, messageId={}", topic, messageId);
         } catch (FirebaseMessagingException e) {
             log.error(
-                    "FCM 토픽 메시지 전송에 실패했습니다. topic={}, errorCode={}",
+                    "FCM topic message failed. topic={}, errorCode={}",
                     topic,
                     e.getMessagingErrorCode(),
                     e
@@ -54,24 +54,26 @@ public class FirebaseFcmMessageSender implements FcmMessageSender {
             String body,
             Map<String, String> data
     ) {
-        Message message = Message.builder()
-                .setToken(token)
-                .setNotification(Notification.builder()
-                        .setTitle(title)
-                        .setBody(body)
-                        .build())
-                .putAllData(data)
-                .build();
-
         try {
+            Message message = Message.builder()
+                    .setToken(token)
+                    .setNotification(Notification.builder()
+                            .setTitle(title)
+                            .setBody(body)
+                            .build())
+                    .putAllData(data)
+                    .build();
+
             String messageId = firebaseMessaging.send(message);
-            log.info("FCM 토큰 메시지 전송되었습니다. messageId={}", messageId);
+            log.info("FCM token message sent. messageId={}", messageId);
         } catch (FirebaseMessagingException e) {
             log.error(
-                    "FCM 토큰 메시지 전송에 실패했습니다. errorCode={}",
+                    "FCM token message failed. errorCode={}",
                     e.getMessagingErrorCode(),
                     e
             );
+        } catch (IllegalArgumentException e) {
+            log.error("FCM token message could not be built.", e);
         }
     }
 }

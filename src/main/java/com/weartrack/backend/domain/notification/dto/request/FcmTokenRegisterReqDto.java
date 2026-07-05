@@ -13,4 +13,7 @@ public record FcmTokenRegisterReqDto(
         @Schema(description = "토큰이 발급된 기기 타입", example = "ANDROID")
         DeviceType deviceType
 ) {
+    public DeviceType deviceTypeOrUnknown() {
+        return deviceType == null ? DeviceType.UNKNOWN : deviceType;
+    }
 }
