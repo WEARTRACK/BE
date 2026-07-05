@@ -1,6 +1,5 @@
 package com.weartrack.backend.domain.clothes.service;
 
-import com.weartrack.backend.domain.closet.entity.Closet;
 import com.weartrack.backend.domain.closet.entity.ClosetSection;
 import com.weartrack.backend.domain.closet.exception.ClosetErrorCode;
 import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
@@ -50,14 +49,14 @@ public class ClothesService {
         ClosetSection section = closetSectionRepository.findById(request.sectionId())
                 .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
 
-        if (!section.getCloset().getMemberId().equals(memberId)) {
-            throw new GeneralException(ClosetErrorCode.SECTION_NOT_OWNED);
-        }
+        validateSection(memberId, request.closetId(), section);
 
         Clothes clothes = Clothes.builder()
                 .clothesPhotoId(clothesPhoto.getId())
                 .closetSectionId(section.getSectionId())
                 .imageUrl(clothesPhoto.getImageUrl())
+                .productName(request.productName())
+                .brandName(request.brandName())
                 .color(request.color())
                 .category(CategoryOrder.normalize(request.category()))
                 .price(request.price())
@@ -68,12 +67,10 @@ public class ClothesService {
 
         updateOnboardingQuestByCategory(memberId, savedClothes.getCategory());
 
-        return toCreateResponse(savedClothes);
+        return toCreateResponse(savedClothes, section);
     }
 
-    public ClothesFilterResDto filterClothes(
-            Long memberId, String color, String category, Pageable pageable
-    ) {
+    public ClothesFilterResDto filterClothes(Long memberId, String color, String category, Pageable pageable) {
         Page<Clothes> page = clothesRepository.searchByMemberIdAndFilters(
                 memberId, color, normalizeCategoryFilter(category), pageable
         );
@@ -108,27 +105,31 @@ public class ClothesService {
     }
 
     @Transactional
-    public ClothesDetailResDto updateClothes(
-            Long memberId, Long clothesId, ClothesUpdateRequest request
-    ) {
+    public ClothesDetailResDto updateClothes(Long memberId, Long clothesId, ClothesUpdateRequest request) {
         Clothes clothes = clothesRepository.findActiveById(clothesId)
                 .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
 
         ClosetSection currentSection = closetSectionRepository.findById(clothes.getClosetSectionId())
                 .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
 
-        Closet closet = currentSection.getCloset();
-
-        if (!closet.getMemberId().equals(memberId)) {
+        if (!currentSection.getCloset().getMemberId().equals(memberId)) {
             throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
         }
 
+        clothes.updateProductName(request.productName());
+        clothes.updateBrandName(request.brandName());
         clothes.updatePrice(request.price());
 
         ClosetSection finalSection = currentSection;
 
         if (request.sectionId() != null && !request.sectionId().equals(currentSection.getSectionId())) {
             finalSection = moveClothesToSection(clothes, currentSection, request.sectionId(), memberId);
+
+            if (request.closetId() != null) {
+                validateSection(memberId, request.closetId(), finalSection);
+            }
+        } else if (request.closetId() != null) {
+            validateSection(memberId, request.closetId(), currentSection);
         }
 
         return ClothesDetailResDto.from(clothes, finalSection);
@@ -166,22 +167,33 @@ public class ClothesService {
             throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
         }
 
-        // 과거 회고와 리포트의 옷 정보 및 이미지를 보존하기 위해 Soft Delete 처리한다.
         clothes.delete();
         section.decreaseClothesCount();
     }
 
-    private ClothesCreateResponse toCreateResponse(Clothes savedClothes) {
+    private void validateSection(Long memberId, Long closetId, ClosetSection section) {
+        if (!section.getCloset().getMemberId().equals(memberId)) {
+            throw new GeneralException(ClosetErrorCode.SECTION_NOT_OWNED);
+        }
+
+        if (!section.getCloset().getClosetId().equals(closetId)) {
+            throw new GeneralException(ClosetErrorCode.SECTION_NOT_IN_CLOSET);
+        }
+    }
+
+    private ClothesCreateResponse toCreateResponse(Clothes savedClothes, ClosetSection section) {
         return new ClothesCreateResponse(
                 savedClothes.getId(),
                 savedClothes.getClothesPhotoId(),
                 savedClothes.getImageUrl(),
                 savedClothes.getProductName(),
+                savedClothes.getBrandName(),
                 savedClothes.getColor(),
                 savedClothes.getCategory(),
                 savedClothes.getPrice(),
                 savedClothes.getPurchaseDate(),
                 savedClothes.getStorageLocation(),
+                section.getCloset().getClosetId(),
                 savedClothes.getClosetSectionId(),
                 savedClothes.getCreatedAt()
         );
