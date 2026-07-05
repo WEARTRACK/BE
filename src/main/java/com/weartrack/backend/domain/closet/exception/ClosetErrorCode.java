@@ -22,6 +22,8 @@ public enum ClosetErrorCode implements BaseErrorCode {
     SECTION_COUNT_MISMATCH("CLOSET_4011", "템플릿의 칸 개수가 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
     SECTION_NOT_OWNED("CLOSET_4012", "본인의 섹션이 아닙니다.", HttpStatus.FORBIDDEN),
     DUPLICATE_CLOSET("CLOSET_4013", "이미 등록된 옷장이 있습니다.", HttpStatus.CONFLICT),
+    CLOSET_LIMIT_EXCEEDED("CLOSET_4014", "옷장은 최대 3개까지 등록할 수 있습니다.", HttpStatus.BAD_REQUEST),
+    CLOSET_NOT_EMPTY("CLOSET_4015", "옷장 안에 옷이 있으면 삭제할 수 없어요. 옷을 모두 비워주세요.", HttpStatus.BAD_REQUEST),
     CLOSET_IMAGE_SAVE_FAILED("CLOSET_5001", "옷장 이미지 저장 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String code;

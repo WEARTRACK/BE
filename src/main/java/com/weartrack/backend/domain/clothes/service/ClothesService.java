@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ClothesService {
 
+    private static final int MAX_CLOTHES_COUNT_PER_CLOSET = 80;
+
     private final ClothesRepository clothesRepository;
     private final ClothesPhotoRepository clothesPhotoRepository;
     private final ClosetSectionRepository closetSectionRepository;
@@ -50,6 +52,7 @@ public class ClothesService {
                 .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
 
         validateSection(memberId, request.closetId(), section);
+        validateClothesLimit(section.getCloset().getClosetId());
 
         Clothes clothes = Clothes.builder()
                 .clothesPhotoId(clothesPhoto.getId())
@@ -72,10 +75,14 @@ public class ClothesService {
 
     public ClothesFilterResDto filterClothes(Long memberId, String color, String category, Pageable pageable) {
         Page<Clothes> page = clothesRepository.searchByMemberIdAndFilters(
-                memberId, color, normalizeCategoryFilter(category), pageable
+                memberId,
+                color,
+                normalizeCategoryFilter(category),
+                pageable
         );
 
-        List<Long> sectionIds = page.getContent().stream()
+        List<Long> sectionIds = page.getContent()
+                .stream()
                 .map(Clothes::getClosetSectionId)
                 .distinct()
                 .toList();
@@ -135,6 +142,22 @@ public class ClothesService {
         return ClothesDetailResDto.from(clothes, finalSection);
     }
 
+    @Transactional
+    public void deleteClothes(Long memberId, Long clothesId) {
+        Clothes clothes = clothesRepository.findActiveById(clothesId)
+                .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
+
+        ClosetSection section = closetSectionRepository.findById(clothes.getClosetSectionId())
+                .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
+
+        if (!section.getCloset().getMemberId().equals(memberId)) {
+            throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
+        }
+
+        clothes.delete();
+        section.decreaseClothesCount();
+    }
+
     private ClosetSection moveClothesToSection(
             Clothes clothes,
             ClosetSection currentSection,
@@ -155,22 +178,6 @@ public class ClothesService {
         return targetSection;
     }
 
-    @Transactional
-    public void deleteClothes(Long memberId, Long clothesId) {
-        Clothes clothes = clothesRepository.findActiveById(clothesId)
-                .orElseThrow(() -> new GeneralException(ClothesErrorCode.CLOTHES_NOT_FOUND));
-
-        ClosetSection section = closetSectionRepository.findById(clothes.getClosetSectionId())
-                .orElseThrow(() -> new GeneralException(ClosetErrorCode.SECTION_NOT_FOUND));
-
-        if (!section.getCloset().getMemberId().equals(memberId)) {
-            throw new GeneralException(ClothesErrorCode.CLOTHES_NOT_OWNED);
-        }
-
-        clothes.delete();
-        section.decreaseClothesCount();
-    }
-
     private void validateSection(Long memberId, Long closetId, ClosetSection section) {
         if (!section.getCloset().getMemberId().equals(memberId)) {
             throw new GeneralException(ClosetErrorCode.SECTION_NOT_OWNED);
@@ -178,6 +185,19 @@ public class ClothesService {
 
         if (!section.getCloset().getClosetId().equals(closetId)) {
             throw new GeneralException(ClosetErrorCode.SECTION_NOT_IN_CLOSET);
+        }
+    }
+
+    private void validateClothesLimit(Long closetId) {
+        List<Long> sectionIds = closetSectionRepository.findAllByClosetClosetId(closetId)
+                .stream()
+                .map(ClosetSection::getSectionId)
+                .toList();
+
+        long clothesCount = clothesRepository.countByClosetSectionIdInAndDeletedAtIsNull(sectionIds);
+
+        if (clothesCount >= MAX_CLOTHES_COUNT_PER_CLOSET) {
+            throw new GeneralException(ClothesErrorCode.CLOTHES_LIMIT_EXCEEDED);
         }
     }
 
