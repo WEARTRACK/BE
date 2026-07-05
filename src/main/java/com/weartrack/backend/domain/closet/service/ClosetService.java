@@ -2,10 +2,7 @@ package com.weartrack.backend.domain.closet.service;
 
 import com.weartrack.backend.domain.closet.dto.request.ClosetCreateReqDto;
 import com.weartrack.backend.domain.closet.dto.request.ClosetSectionCreateReqDto;
-import com.weartrack.backend.domain.closet.dto.response.ClosetCreateResDto;
-import com.weartrack.backend.domain.closet.dto.response.ClosetInquireResDto;
-import com.weartrack.backend.domain.closet.dto.response.ClosetSectionResDto;
-import com.weartrack.backend.domain.closet.dto.response.ClosetStatisticsDto;
+import com.weartrack.backend.domain.closet.dto.response.*;
 import com.weartrack.backend.domain.closet.entity.Closet;
 import com.weartrack.backend.domain.closet.entity.ClosetSection;
 import com.weartrack.backend.domain.closet.entity.ClosetTemplate;
@@ -119,6 +116,13 @@ public class ClosetService {
         Closet closet = findClosetWithOwnershipCheck(memberId, closetId);
         validateSectionCount(closet);
         return ClosetInquireResDto.from(closet);
+    }
+
+    public List<ClosetSelectResDto> getMyClosetsForSelect(Long memberId) {
+        return closetRepository.findAllByMemberId(memberId)
+                .stream()
+                .map(ClosetSelectResDto::from)
+                .toList();
     }
 
     //옷장의 특정 칸에 해당하는 옷 리스트를 조회하는 API

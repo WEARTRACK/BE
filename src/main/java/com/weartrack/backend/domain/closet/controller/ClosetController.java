@@ -3,6 +3,7 @@ package com.weartrack.backend.domain.closet.controller;
 import com.weartrack.backend.domain.closet.dto.request.ClosetCreateReqDto;
 import com.weartrack.backend.domain.closet.dto.response.ClosetCreateResDto;
 import com.weartrack.backend.domain.closet.dto.response.ClosetInquireResDto;
+import com.weartrack.backend.domain.closet.dto.response.ClosetSelectResDto;
 import com.weartrack.backend.domain.closet.dto.response.ClosetStatisticsDto;
 import com.weartrack.backend.domain.closet.service.ClosetService;
 import com.weartrack.backend.domain.clothes.dto.response.ClothesListResDto;
@@ -19,6 +20,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "Closet", description = "옷장 관련 API")
 @RestController
@@ -92,5 +95,18 @@ public class ClosetController {
             @Valid @PathVariable Long closetId
     ){
         return ApiResponse.success(closetService.getStatistics(principal.memberId(), closetId));
+    }
+
+    @Operation(
+            summary = "옷 등록용 내 옷장 선택 목록 조회",
+            description = "옷 등록 화면에서 선택할 수 있는 내 옷장과 칸 목록을 조회"
+    )
+    @GetMapping("/select")
+    public ApiResponse<List<ClosetSelectResDto>> getMyClosetsForSelect(
+            @AuthenticationPrincipal JwtPrincipal principal
+    ) {
+        return ApiResponse.success(
+                closetService.getMyClosetsForSelect(principal.memberId())
+        );
     }
 }
