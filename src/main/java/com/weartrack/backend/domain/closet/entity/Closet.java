@@ -19,7 +19,7 @@ public class Closet extends BaseTimeEntity {
     @Column(name = "closet_id")
     private Long closetId;
 
-    @Column(name = "member_id", nullable = false, unique = true)
+    @Column(name = "member_id", nullable = false)
     private Long memberId;
 
     @Column(name = "template_id", nullable = false)

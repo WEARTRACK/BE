@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface ClosetSectionRepository extends JpaRepository<ClosetSection, Long> {
 
     @Query("""
@@ -13,4 +15,6 @@ public interface ClosetSectionRepository extends JpaRepository<ClosetSection, Lo
         WHERE cs.closet.memberId = :memberId
         """)
     long countByMemberId(@Param("memberId") Long memberId);
+
+    List<ClosetSection> findAllByClosetClosetId(Long closetId);
 }
