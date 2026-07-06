@@ -5,6 +5,7 @@ import java.util.List;
 public record ClosetCreateResDto(
         Long closetId,
         Integer templateId,
+        String closetName,
         String imageUrl,
         List<ClosetSectionResDto> sections
 ) {

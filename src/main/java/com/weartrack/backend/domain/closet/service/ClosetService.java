@@ -57,6 +57,7 @@ public class ClosetService {
         Closet closet = Closet.builder()
                 .memberId(memberId)
                 .templateId(request.templateId())
+                .closetName(request.closetName())
                 .imageUrl(request.imageUrl())
                 .build();
 
@@ -89,6 +90,7 @@ public class ClosetService {
         return new ClosetCreateResDto(
                 savedCloset.getClosetId(),
                 savedCloset.getTemplateId(),
+                savedCloset.getClosetName(),
                 savedCloset.getImageUrl(),
                 sectionResponses
         );
