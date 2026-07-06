@@ -4,11 +4,18 @@ import com.weartrack.backend.domain.member.repository.MemberRepository;
 import com.weartrack.backend.domain.notification.dto.request.FcmTokenDeleteReqDto;
 import com.weartrack.backend.domain.notification.dto.request.FcmTokenRegisterReqDto;
 import com.weartrack.backend.domain.notification.dto.request.NotificationSettingUpdateReqDto;
+import com.weartrack.backend.domain.notification.dto.response.NotificationListResDto;
+import com.weartrack.backend.domain.notification.dto.response.NotificationResDto;
 import com.weartrack.backend.domain.notification.dto.response.NotificationSettingResDto;
+import com.weartrack.backend.domain.notification.entity.Notification;
 import com.weartrack.backend.domain.notification.entity.NotificationSetting;
 import com.weartrack.backend.domain.notification.entity.enums.NotificationType;
+import com.weartrack.backend.domain.notification.exception.NotificationErrorCode;
 import com.weartrack.backend.domain.notification.repository.MemberFcmTokenRepository;
+import com.weartrack.backend.domain.notification.repository.NotificationRepository;
 import com.weartrack.backend.domain.notification.repository.NotificationSettingRepository;
+import com.weartrack.backend.global.exception.GeneralException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,6 +23,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +36,7 @@ public class NotificationService {
     private final MemberRepository memberRepository;
     private final MemberFcmTokenRepository memberFcmTokenRepository;
     private final NotificationSettingRepository notificationSettingRepository;
+    private final NotificationRepository notificationRepository;
 
     @Transactional
     public void registerFcmToken(Long memberId, FcmTokenRegisterReqDto request) {
@@ -67,6 +77,64 @@ public class NotificationService {
                 ));
     }
 
+    public NotificationListResDto getNotifications(Long memberId, Pageable pageable) {
+        Page<Notification> page = notificationRepository.findByMemberIdOrderByCreatedAtDescIdDesc(
+                memberId,
+                pageable
+        );
+
+        return NotificationListResDto.from(page);
+    }
+
+    @Transactional
+    public NotificationResDto markAsRead(Long memberId, Long notificationId) {
+        Notification notification = notificationRepository.findByIdAndMemberId(
+                        notificationId,
+                        memberId
+                )
+                .orElseThrow(() -> new GeneralException(
+                        NotificationErrorCode.NOTIFICATION_NOT_FOUND
+                ));
+
+        notification.markAsRead(LocalDateTime.now());
+
+        return NotificationResDto.from(notification);
+    }
+
+    @Transactional
+    public void saveNotification(
+            Long memberId,
+            NotificationType type,
+            String title,
+            String body
+    ) {
+        notificationRepository.save(Notification.builder()
+                .memberId(memberId)
+                .type(type)
+                .title(title)
+                .body(body)
+                .build());
+    }
+
+    @Transactional
+    public void saveNotifications(
+            Set<Long> memberIds,
+            NotificationType type,
+            String title,
+            String body
+    ) {
+        List<Notification> notifications = memberIds.stream()
+                .map(memberId -> Notification.builder()
+                        .memberId(memberId)
+                        .type(type)
+                        .title(title)
+                        .body(body)
+                        .build())
+                .toList();
+
+        notificationRepository.saveAll(notifications);
+    }
+
     public List<String> findTokensEnabledFor(NotificationType type) {
         List<Long> memberIds = memberRepository.findAll()
                 .stream()
@@ -74,6 +142,15 @@ public class NotificationService {
                 .toList();
 
         return findTokensEnabledFor(type, memberIds);
+    }
+
+    public Map<Long, List<String>> findTokenMapEnabledFor(NotificationType type) {
+        List<Long> memberIds = memberRepository.findAll()
+                .stream()
+                .map(member -> member.getMemberId())
+                .toList();
+
+        return findTokenMapEnabledFor(type, memberIds);
     }
 
     public List<String> findTokensEnabledFor(NotificationType type, List<Long> memberIds) {

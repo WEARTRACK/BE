@@ -26,13 +26,22 @@ public class DailyReviewPushNotificationSender implements DailyReviewPushSender 
 
     @Override
     public void sendDailyReviewReminder() {
-        List<String> tokens = notificationService.findTokensEnabledFor(NotificationType.DAILY_REVIEW);
+        Map<Long, List<String>> tokenMap =
+                notificationService.findTokenMapEnabledFor(NotificationType.DAILY_REVIEW);
 
-        fcmMessageSender.sendToTokens(
-                tokens,
-                TITLE,
-                BODY,
-                DATA
-        );
+        tokenMap.forEach((memberId, tokens) -> {
+            fcmMessageSender.sendToTokens(
+                    tokens,
+                    TITLE,
+                    BODY,
+                    DATA
+            );
+            notificationService.saveNotification(
+                    memberId,
+                    NotificationType.DAILY_REVIEW,
+                    TITLE,
+                    BODY
+            );
+        });
     }
 }

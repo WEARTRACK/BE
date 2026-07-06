@@ -29,19 +29,29 @@ public class WeeklyFashionReportPushNotificationSender
             LocalDate weekEndDate
     ) {
         String weekStartDateValue = weekStartDate.toString();
-        List<String> tokens = notificationService.findTokensEnabledFor(NotificationType.FASHION_REPORT);
-
-        fcmMessageSender.sendToTokens(
-                tokens,
-                TITLE,
-                BODY,
-                Map.of(
-                        "type", "WEEKLY_FASHION_REPORT",
-                        "screen", "WEEKLY_FASHION_REPORT",
-                        "weekStartDate", weekStartDateValue,
-                        "weekEndDate", weekEndDate.toString(),
-                        "apiPath", API_PATH_PREFIX + weekStartDateValue
-                )
+        Map<Long, List<String>> tokenMap =
+                notificationService.findTokenMapEnabledFor(NotificationType.FASHION_REPORT);
+        Map<String, String> data = Map.of(
+                "type", "WEEKLY_FASHION_REPORT",
+                "screen", "WEEKLY_FASHION_REPORT",
+                "weekStartDate", weekStartDateValue,
+                "weekEndDate", weekEndDate.toString(),
+                "apiPath", API_PATH_PREFIX + weekStartDateValue
         );
+
+        tokenMap.forEach((memberId, tokens) -> {
+            fcmMessageSender.sendToTokens(
+                    tokens,
+                    TITLE,
+                    BODY,
+                    data
+            );
+            notificationService.saveNotification(
+                    memberId,
+                    NotificationType.FASHION_REPORT,
+                    TITLE,
+                    BODY
+            );
+        });
     }
 }

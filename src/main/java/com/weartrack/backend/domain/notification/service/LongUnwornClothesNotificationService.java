@@ -1,5 +1,6 @@
 package com.weartrack.backend.domain.notification.service;
 
+import com.weartrack.backend.domain.notification.entity.enums.NotificationType;
 import com.weartrack.backend.global.firebase.service.FcmMessageSender;
 import java.time.YearMonth;
 import java.util.Map;
@@ -17,6 +18,7 @@ public class LongUnwornClothesNotificationService {
 
     private final LongUnwornClothesNotificationQueryService queryService;
     private final FcmMessageSender fcmMessageSender;
+    private final NotificationService notificationService;
 
     public void sendMonthlyLongUnwornClothesNotifications(YearMonth targetMonth) {
         queryService.findNotificationRequests(targetMonth)
@@ -51,6 +53,12 @@ public class LongUnwornClothesNotificationService {
                 TITLE,
                 BODY_FORMAT.formatted(request.unwornClothesCount()),
                 data
+        );
+        notificationService.saveNotification(
+                request.memberId(),
+                NotificationType.LONG_UNWORN_CLOTHES,
+                TITLE,
+                BODY_FORMAT.formatted(request.unwornClothesCount())
         );
         log.info(
                 "장기 미착용 옷 알림 발송 요청: memberId={}, targetMonth={}, unwornClothesCount={}",
