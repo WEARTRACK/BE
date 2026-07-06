@@ -9,6 +9,7 @@ import java.util.List;
 public record ClosetSelectResDto(
         Long closetId,
         Integer templateId,
+        String closetName,
         String imageUrl,
         List<SectionInfo> sections
 ) {
@@ -32,6 +33,7 @@ public record ClosetSelectResDto(
         return new ClosetSelectResDto(
                 closet.getClosetId(),
                 closet.getTemplateId(),
+                closet.getClosetName(),
                 closet.getImageUrl(),
                 closet.getSections().stream()
                         .sorted(Comparator.comparing(ClosetSection::getSectionOrder))

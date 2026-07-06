@@ -15,7 +15,8 @@ import java.util.List;
 @Builder
 public class Closet extends BaseTimeEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "closet_id")
     private Long closetId;
 
@@ -24,6 +25,9 @@ public class Closet extends BaseTimeEntity {
 
     @Column(name = "template_id", nullable = false)
     private Integer templateId;
+
+    @Column(name = "closet_name", nullable = false, length = 20)
+    private String closetName;
 
     @Column(name = "image_url")
     private String imageUrl;

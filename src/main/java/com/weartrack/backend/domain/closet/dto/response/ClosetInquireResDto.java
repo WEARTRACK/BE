@@ -7,7 +7,10 @@ import java.util.Comparator;
 import java.util.List;
 
 public record ClosetInquireResDto(
+        Long closetId,
         Integer templateId,
+        String closetName,
+        String imageUrl,
         Integer sectionCount,
         List<SectionInfo> sections
 ) {
@@ -17,7 +20,7 @@ public record ClosetInquireResDto(
             Integer sectionOrder,
             Integer clothesCount
     ) {
-        public static SectionInfo from(ClosetSection section){
+        public static SectionInfo from(ClosetSection section) {
             return new SectionInfo(
                     section.getSectionId(),
                     section.getSectionName(),
@@ -34,7 +37,10 @@ public record ClosetInquireResDto(
                 .toList();
 
         return new ClosetInquireResDto(
+                closet.getClosetId(),
                 closet.getTemplateId(),
+                closet.getClosetName(),
+                closet.getImageUrl(),
                 sections.size(),
                 sections
         );
