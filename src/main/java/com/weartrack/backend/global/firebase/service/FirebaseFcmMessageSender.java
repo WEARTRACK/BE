@@ -36,14 +36,44 @@ public class FirebaseFcmMessageSender implements FcmMessageSender {
 
         try {
             String messageId = firebaseMessaging.send(message);
-            log.info("FCM 토픽 메시지 전송되었습니다. topic={}, messageId={}", topic, messageId);
+            log.info("FCM topic message sent. topic={}, messageId={}", topic, messageId);
         } catch (FirebaseMessagingException e) {
             log.error(
-                    "FCM 토픽 메시지 전송에 실패했습니다. topic={}, errorCode={}",
+                    "FCM topic message failed. topic={}, errorCode={}",
                     topic,
                     e.getMessagingErrorCode(),
                     e
             );
+        }
+    }
+
+    @Override
+    public void sendToToken(
+            String token,
+            String title,
+            String body,
+            Map<String, String> data
+    ) {
+        try {
+            Message message = Message.builder()
+                    .setToken(token)
+                    .setNotification(Notification.builder()
+                            .setTitle(title)
+                            .setBody(body)
+                            .build())
+                    .putAllData(data)
+                    .build();
+
+            String messageId = firebaseMessaging.send(message);
+            log.info("FCM token message sent. messageId={}", messageId);
+        } catch (FirebaseMessagingException e) {
+            log.error(
+                    "FCM token message failed. errorCode={}",
+                    e.getMessagingErrorCode(),
+                    e
+            );
+        } catch (IllegalArgumentException e) {
+            log.error("FCM token message could not be built.", e);
         }
     }
 }

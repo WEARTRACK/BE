@@ -1,4 +1,4 @@
-package com.weartrack.backend.domain.fashionReport.notification;
+package com.weartrack.backend.domain.notification.sender;
 
 import java.time.LocalDate;
 
