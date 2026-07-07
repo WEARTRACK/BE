@@ -5,16 +5,13 @@ import com.weartrack.backend.domain.notification.dto.request.FcmTokenDeleteReqDt
 import com.weartrack.backend.domain.notification.dto.request.FcmTokenRegisterReqDto;
 import com.weartrack.backend.domain.notification.dto.request.NotificationSettingUpdateReqDto;
 import com.weartrack.backend.domain.notification.dto.response.NotificationListResDto;
-import com.weartrack.backend.domain.notification.dto.response.NotificationResDto;
 import com.weartrack.backend.domain.notification.dto.response.NotificationSettingResDto;
 import com.weartrack.backend.domain.notification.entity.Notification;
 import com.weartrack.backend.domain.notification.entity.NotificationSetting;
 import com.weartrack.backend.domain.notification.entity.enums.NotificationType;
-import com.weartrack.backend.domain.notification.exception.NotificationErrorCode;
 import com.weartrack.backend.domain.notification.repository.MemberFcmTokenRepository;
 import com.weartrack.backend.domain.notification.repository.NotificationRepository;
 import com.weartrack.backend.domain.notification.repository.NotificationSettingRepository;
-import com.weartrack.backend.global.exception.GeneralException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -77,28 +74,16 @@ public class NotificationService {
                 ));
     }
 
+    @Transactional
     public NotificationListResDto getNotifications(Long memberId, Pageable pageable) {
+        notificationRepository.markAllUnreadAsReadByMemberId(memberId, LocalDateTime.now());
+
         Page<Notification> page = notificationRepository.findByMemberIdOrderByCreatedAtDescIdDesc(
                 memberId,
                 pageable
         );
 
         return NotificationListResDto.from(page);
-    }
-
-    @Transactional
-    public NotificationResDto markAsRead(Long memberId, Long notificationId) {
-        Notification notification = notificationRepository.findByIdAndMemberId(
-                        notificationId,
-                        memberId
-                )
-                .orElseThrow(() -> new GeneralException(
-                        NotificationErrorCode.NOTIFICATION_NOT_FOUND
-                ));
-
-        notification.markAsRead(LocalDateTime.now());
-
-        return NotificationResDto.from(notification);
     }
 
     @Transactional

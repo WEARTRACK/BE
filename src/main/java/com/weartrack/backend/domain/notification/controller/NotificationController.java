@@ -4,7 +4,6 @@ import com.weartrack.backend.domain.notification.dto.request.FcmTokenDeleteReqDt
 import com.weartrack.backend.domain.notification.dto.request.FcmTokenRegisterReqDto;
 import com.weartrack.backend.domain.notification.dto.request.NotificationSettingUpdateReqDto;
 import com.weartrack.backend.domain.notification.dto.response.NotificationListResDto;
-import com.weartrack.backend.domain.notification.dto.response.NotificationResDto;
 import com.weartrack.backend.domain.notification.dto.response.NotificationSettingResDto;
 import com.weartrack.backend.domain.notification.service.NotificationService;
 import com.weartrack.backend.global.response.ApiResponse;
@@ -20,7 +19,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,7 +36,7 @@ public class NotificationController {
             summary = "알림 목록 조회",
             description = """
                     알림 목록을 조회합니다.
-                    최신 발송 알림이 먼저 오도록 정렬되며 각 알림의 읽음 여부를 함께 반환합니다.
+                    알림 목록에 진입한 것으로 보고, 조회 시점에 모든 안 읽은 알림을 읽음 처리합니다.
                     """
     )
     @GetMapping
@@ -54,26 +52,8 @@ public class NotificationController {
     }
 
     @Operation(
-            summary = "알림 읽음 처리",
-            description = "알림을 읽음 상태로 변경합니다."
-    )
-    @PatchMapping("/{notificationId}/read")
-    public ApiResponse<NotificationResDto> markAsRead(
-            @AuthenticationPrincipal JwtPrincipal principal,
-            @PathVariable Long notificationId
-    ) {
-        return ApiResponse.success(notificationService.markAsRead(
-                principal.memberId(),
-                notificationId
-        ));
-    }
-
-    @Operation(
             summary = "FCM 토큰 등록",
-            description = """
-                    FCM 디바이스 토큰을 등록합니다.
-                    같은 토큰이 이미 등록되어 있으면 현재 사용자 기준으로 소유자와 기기 타입을 갱신합니다.
-                    """
+            description = " FCM 디바이스 토큰을 등록합니다."
     )
     @PostMapping("/fcm-token")
     public ApiResponse<Void> registerFcmToken(
@@ -116,10 +96,7 @@ public class NotificationController {
 
     @Operation(
             summary = "알림 설정 변경",
-            description = """
-                    푸시 알림 수신 설정을 변경합니다.
-                    pushEnabled가 false이면 개별 알림 설정과 관계없이 모든 푸시 알림 발송이 중단됩니다.
-                    """
+            description = "푸시 알림 수신 설정을 변경합니다."
     )
     @PatchMapping("/settings")
     public ApiResponse<NotificationSettingResDto> updateSettings(
