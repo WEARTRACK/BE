@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,15 +76,18 @@ public class NotificationService {
     }
 
     @Transactional
-    public NotificationListResDto getNotifications(Long memberId, Pageable pageable) {
+    public NotificationListResDto getNotifications(Long memberId, int page, int size) {
         notificationRepository.markAllUnreadAsReadByMemberId(memberId, LocalDateTime.now());
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        Pageable pageable = PageRequest.of(safePage, safeSize);
 
-        Page<Notification> page = notificationRepository.findByMemberIdOrderByCreatedAtDescIdDesc(
+        Page<Notification> notificationPage = notificationRepository.findByMemberIdOrderByCreatedAtDescIdDesc(
                 memberId,
                 pageable
         );
 
-        return NotificationListResDto.from(page);
+        return NotificationListResDto.from(notificationPage);
     }
 
     @Transactional

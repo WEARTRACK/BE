@@ -9,12 +9,10 @@ import com.weartrack.backend.domain.notification.service.NotificationService;
 import com.weartrack.backend.global.response.ApiResponse;
 import com.weartrack.backend.global.security.JwtPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +20,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -42,12 +41,12 @@ public class NotificationController {
     @GetMapping
     public ApiResponse<NotificationListResDto> getNotifications(
             @AuthenticationPrincipal JwtPrincipal principal,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable
+            @RequestParam int page, @RequestParam int size
     ) {
         return ApiResponse.success(notificationService.getNotifications(
                 principal.memberId(),
-                pageable
+                page,
+                size
         ));
     }
 
