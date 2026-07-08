@@ -3,8 +3,8 @@ package com.weartrack.backend.domain.clothes.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "clothes")
@@ -30,6 +30,9 @@ public class Clothes {
 
     @Column(name = "product_name")
     private String productName;
+
+    @Column(name = "brand_name", length = 100)
+    private String brandName;
 
     @Column(name = "color", nullable = false)
     private String color;
@@ -57,7 +60,6 @@ public class Clothes {
 
     @PrePersist
     public void prePersist() {
-        // TODO: 서버 기본 타임존에 의존하지 않도록 생성·수정 시각을 Instant 또는 설정 타임존 기준으로 통일한다.
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -67,15 +69,15 @@ public class Clothes {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updateColor(String color) {
-        if (color != null && !color.isBlank()) {
-            this.color = color;
+    public void updateProductName(String productName) {
+        if (productName != null) {
+            this.productName = productName;
         }
     }
 
-    public void updateCategory(String category) {
-        if (category != null && !category.isBlank()) {
-            this.category = category;
+    public void updateBrandName(String brandName) {
+        if (brandName != null) {
+            this.brandName = brandName;
         }
     }
 

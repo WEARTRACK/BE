@@ -38,9 +38,9 @@ public interface ClothesRepository extends JpaRepository<Clothes, Long> {
     @Query("""
         SELECT c FROM Clothes c
         WHERE c.closetSectionId IN (
-        SELECT s.sectionId FROM ClosetSection s
-        WHERE s.closet.closetId = :closetId
-    )
+            SELECT s.sectionId FROM ClosetSection s
+            WHERE s.closet.closetId = :closetId
+        )
         AND c.deletedAt IS NULL
     """)
     List<Clothes> findAllByClosetId(@Param("closetId") Long closetId);

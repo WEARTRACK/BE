@@ -30,12 +30,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.URI;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ProductLinkService {
+
+    private static final int MAX_CLOTHES_COUNT_PER_CLOSET = 80;
 
     private final ProductUrlNormalizer productUrlNormalizer;
     private final UrlSafetyValidator urlSafetyValidator;
@@ -96,6 +97,8 @@ public class ProductLinkService {
             throw new GeneralException(ClosetErrorCode.SECTION_NOT_OWNED);
         }
 
+        validateClothesLimit(section.getCloset().getClosetId());
+
         ClothesPhoto photo = clothesPhotoRepository.save(ClothesPhoto.builder()
                 .memberId(memberId)
                 .imageUrl(request.imageUrl())
@@ -112,6 +115,7 @@ public class ProductLinkService {
                 .closetSectionId(section.getSectionId())
                 .imageUrl(request.imageUrl())
                 .productName(request.productName())
+                .brandName(request.brandName())
                 .color(request.color())
                 .category(normalizeCategory(request.category()))
                 .price(request.price())
@@ -122,7 +126,7 @@ public class ProductLinkService {
         Clothes savedClothes = clothesRepository.save(clothes);
         section.increaseClothesCount();
 
-        return toCreateResponse(savedClothes);
+        return toCreateResponse(savedClothes, section);
     }
 
     private ProductParseResult parseProduct(SourceShop sourceShop, String html, String pageUrl) {
@@ -140,17 +144,32 @@ public class ProductLinkService {
         return result;
     }
 
-    private ClothesCreateResponse toCreateResponse(Clothes clothes) {
+    private void validateClothesLimit(Long closetId) {
+        List<Long> sectionIds = closetSectionRepository.findAllByClosetClosetId(closetId)
+                .stream()
+                .map(ClosetSection::getSectionId)
+                .toList();
+
+        long clothesCount = clothesRepository.countByClosetSectionIdInAndDeletedAtIsNull(sectionIds);
+
+        if (clothesCount >= MAX_CLOTHES_COUNT_PER_CLOSET) {
+            throw new GeneralException(ClothesErrorCode.CLOTHES_LIMIT_EXCEEDED);
+        }
+    }
+
+    private ClothesCreateResponse toCreateResponse(Clothes clothes, ClosetSection section) {
         return new ClothesCreateResponse(
                 clothes.getId(),
                 clothes.getClothesPhotoId(),
                 clothes.getImageUrl(),
                 clothes.getProductName(),
+                clothes.getBrandName(),
                 clothes.getColor(),
                 clothes.getCategory(),
                 clothes.getPrice(),
                 clothes.getPurchaseDate(),
                 clothes.getStorageLocation(),
+                section.getCloset().getClosetId(),
                 clothes.getClosetSectionId(),
                 clothes.getCreatedAt()
         );

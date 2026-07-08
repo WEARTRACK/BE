@@ -31,10 +31,7 @@ public class ClosetPhotoService {
                 image != null ? image.getSize() : null
         );
 
-        if (image == null || image.isEmpty()) {
-            log.warn("[ClosetPhoto] invalid image. image is null or empty");
-            throw new GeneralException(ClosetErrorCode.INVALID_IMAGE);
-        }
+        s3StorageService.validateImageForUpload(image);
 
         byte[] imageBytes = toBytes(image);
 

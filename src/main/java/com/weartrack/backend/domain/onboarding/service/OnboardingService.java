@@ -92,11 +92,29 @@ public class OnboardingService {
         Onboarding onboarding = getOnboarding(memberId);
         List<OnboardingQuest> quests = questRepository.findAllByMemberId(memberId);
 
+        LocalDateTime nextQuestOpenAt = quests.stream()
+                .filter(quest -> !quest.isCompleted())
+                .filter(quest -> !quest.isActive())
+                .map(OnboardingQuest::getAvailableAt)
+                .filter(availableAt -> availableAt != null)
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+
+        int availableQuestCount = (int) quests.stream()
+                .filter(quest -> !quest.isCompleted())
+                .filter(OnboardingQuest::isActive)
+                .count();
+
+        boolean hasNewQuest = availableQuestCount > 0;
+
         return new OnboardingStatusResDto(
                 onboarding.isCompleted(),
                 onboarding.isHidden(),
                 quests.size(),
-                countCompletedQuests(quests)
+                countCompletedQuests(quests),
+                hasNewQuest,
+                availableQuestCount,
+                nextQuestOpenAt
         );
     }
 
