@@ -22,6 +22,16 @@ public class NoopFcmMessageSender implements FcmMessageSender {
             String body,
             Map<String, String> data
     ) {
-        log.info("FCM이 비활성화되어 있습니다. 토픽 메시지가 전송되지 않았습니다. topic={}", topic);
+        log.info("FCM is disabled. Topic message was not sent. topic={}", topic);
+    }
+
+    @Override
+    public void sendToToken(
+            String token,
+            String title,
+            String body,
+            Map<String, String> data
+    ) {
+        log.info("FCM is disabled. Token message was not sent.");
     }
 }

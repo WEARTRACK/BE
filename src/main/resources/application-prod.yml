@@ -72,8 +72,6 @@ ai:
 
 firebase:
   enabled: ${FIREBASE_ENABLED:false}
-  daily-review-topic: ${FIREBASE_DAILY_REVIEW_TOPIC:daily-review-reminder}
-  weekly-fashion-report-topic: ${FIREBASE_WEEKLY_FASHION_REPORT_TOPIC:weekly-fashion-report}
 
 notification:
   time-zone: Asia/Seoul
@@ -81,6 +79,8 @@ notification:
     cron: ${DAILY_REVIEW_NOTIFICATION_CRON:0 0 20 * * *}
   weekly-fashion-report:
     cron: ${WEEKLY_FASHION_REPORT_NOTIFICATION_CRON:0 0 21 * * SUN}
+  long-unworn-clothes:
+    cron: ${LONG_UNWORN_CLOTHES_NOTIFICATION_CRON:0 0 20 1 * *}
 
 logging:
   level:

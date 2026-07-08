@@ -67,6 +67,12 @@ public enum ClothesErrorCode implements BaseErrorCode {
             "PRODUCT_LINK_4005",
             "이미 등록된 상품 링크입니다.",
             HttpStatus.CONFLICT
+    ),
+
+    CLOTHES_LIMIT_EXCEEDED(
+            "CLOTHES_4003",
+            "옷은 1개 옷장당 최대 80벌까지 등록할 수 있습니다.",
+            HttpStatus.BAD_REQUEST
     );
 
     private final String code;
