@@ -18,12 +18,15 @@ import com.weartrack.backend.global.exception.GeneralException;
 import java.io.IOException;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PurchaseCheckService {
@@ -38,13 +41,19 @@ public class PurchaseCheckService {
             int page,
             int size
     ) {
+        Pageable pageable = createPageable(page, size);
         AiClothesPredictionResponse aiResult = predict(image);
+
+        if (aiResult == null || aiResult.results() == null || aiResult.results().isEmpty()) {
+            return emptyResponse(PurchaseCheckResultType.ANALYSIS_FAILED, pageable);
+        }
+
         ResultDto firstResult = aiResult.results().get(0);
 
         String category = normalizeCategory(firstResult.category());
         String color = normalizeColor(firstResult.color());
 
-        return findSimilarClothes(memberId, category, color, page, size);
+        return findSimilarClothes(memberId, category, color, pageable);
     }
 
     public PurchaseCheckResDto checkByLink(
@@ -59,24 +68,21 @@ public class PurchaseCheckService {
         String category = normalizeCategory(preview.category());
         String color = normalizeColor(preview.color());
 
-        return findSimilarClothes(memberId, category, color, page, size);
+        return findSimilarClothes(memberId, category, color, createPageable(page, size));
     }
 
     private AiClothesPredictionResponse predict(MultipartFile image) {
         try {
-            AiClothesPredictionResponse aiResult = clothesAiClient.predict(
+            return clothesAiClient.predict(
                     image.getBytes(),
                     image.getOriginalFilename(),
                     image.getContentType()
             );
-
-            if (aiResult == null || aiResult.results() == null || aiResult.results().isEmpty()) {
-                throw new GeneralException(ClothesErrorCode.CLOTHES_IMAGE_READ_FAILED);
-            }
-
-            return aiResult;
         } catch (IOException e) {
             throw new GeneralException(ClothesErrorCode.CLOTHES_IMAGE_READ_FAILED);
+        } catch (WebClientException e) {
+            log.warn("구매 확인 AI 요청 실패: {}", e.getMessage(), e);
+            return null;
         }
     }
 
@@ -84,11 +90,8 @@ public class PurchaseCheckService {
             Long memberId,
             String category,
             String color,
-            int page,
-            int size
+            Pageable pageable
     ) {
-        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 20));
-
         if (clothesRepository.countByMemberId(memberId) == 0) {
             return emptyResponse(PurchaseCheckResultType.NO_REGISTERED_CLOTHES, pageable);
         }
@@ -109,6 +112,10 @@ public class PurchaseCheckService {
                 : PurchaseCheckResultType.NO_SIMILAR_CLOTHES.message();
 
         return PurchaseCheckResDto.from(message, similarClothes);
+    }
+
+    private Pageable createPageable(int page, int size) {
+        return PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 20));
     }
 
     private PurchaseCheckResDto emptyResponse(
