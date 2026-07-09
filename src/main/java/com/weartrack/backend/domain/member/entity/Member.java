@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -31,6 +32,9 @@ public class Member extends BaseTimeEntity {
 
     @Column(name = "nickname", unique = true, length = 5)
     private String nickname;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "member")
     private final List<SocialAccount> socialAccounts = new ArrayList<>();
@@ -56,7 +60,25 @@ public class Member extends BaseTimeEntity {
         return nickname != null && !nickname.isBlank();
     }
 
+    public boolean isWithdrawn() {
+        return deletedAt != null;
+    }
+
+    public boolean isRejoinBlocked(LocalDateTime now, long blockDays) {
+        return isWithdrawn() && deletedAt.plusDays(blockDays).isAfter(now);
+    }
+
     public void updateNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    public void withdraw() {
+        if (deletedAt == null) {
+            deletedAt = LocalDateTime.now();
+        }
+    }
+
+    public void reactivate() {
+        deletedAt = null;
     }
 }
