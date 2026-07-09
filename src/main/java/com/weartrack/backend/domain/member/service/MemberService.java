@@ -53,7 +53,7 @@ public class MemberService {
 
     @Transactional
     public void withdraw(Long memberId) {
-        Member member = memberRepository.findById(memberId)
+        Member member = memberRepository.findByMemberIdForUpdate(memberId)
                 .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         if (member.isWithdrawn()) {
