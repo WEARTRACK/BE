@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -74,12 +75,14 @@ public class WeeklyReviewController {
     @GetMapping("/long-unworn-clothes/{targetMonth}")
     public ApiResponse<WeeklyReviewLongUnwornClothesResDto> getLongUnwornClothes(
             @AuthenticationPrincipal JwtPrincipal principal,
-            @PathVariable String targetMonth
+            @PathVariable
+            @DateTimeFormat(pattern = "yyyy-MM")
+            YearMonth targetMonth
     ) {
         return ApiResponse.success(
                 weeklyReviewService.getLongUnwornClothes(
                         principal.memberId(),
-                        YearMonth.parse(targetMonth)
+                        targetMonth
                 )
         );
     }

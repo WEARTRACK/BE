@@ -10,7 +10,6 @@ public record WeeklyReviewSummaryResDto(
         int weeklyClosetUsageRate,
         String weeklyInsight,
         int longUnwornClothesCount,
-        String longUnwornInsight,
         List<CategoryGroup> categories
 ) {
     public record CategoryGroup(

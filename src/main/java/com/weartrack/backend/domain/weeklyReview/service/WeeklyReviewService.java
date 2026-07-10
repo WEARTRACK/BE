@@ -32,19 +32,10 @@ public class WeeklyReviewService {
     private final ClothesRepository clothesRepository;
 
     public WeeklyReviewSummaryResDto getCurrentReviewSummary(Long memberId) {
-        LocalDate reviewDate = LocalDate.now(SEOUL_ZONE);
-        return getReviewSummary(memberId, getWeekStartDate(reviewDate), reviewDate);
+        return getReviewSummary(memberId, getWeekStartDate(LocalDate.now(SEOUL_ZONE)));
     }
 
     public WeeklyReviewSummaryResDto getReviewSummary(Long memberId, LocalDate weekStartDate) {
-        return getReviewSummary(memberId, weekStartDate, weekStartDate.plusDays(6));
-    }
-
-    public WeeklyReviewSummaryResDto getReviewSummary(
-            Long memberId,
-            LocalDate weekStartDate,
-            LocalDate reviewDate
-    ) {
         LocalDate weekEndDate = weekStartDate.plusDays(6);
         List<Clothes> clothes = getClothesOwnedAt(memberId, weekEndDate);
 
@@ -72,7 +63,7 @@ public class WeeklyReviewService {
         String weeklyUsageInsight = createWeeklyInsight(memberId, weekStartDate, usageRate);
         List<Clothes> longUnwornClothes = findMonthlyLongUnwornClothes(
                 memberId,
-                getPreviousMonth(reviewDate)
+                getPreviousMonth(weekEndDate)
         );
         int longUnwornClothesCount = longUnwornClothes.size();
         String longUnwornInsight = createLongUnwornInsight(longUnwornClothesCount);
@@ -85,7 +76,6 @@ public class WeeklyReviewService {
                 usageRate,
                 weeklyInsight,
                 longUnwornClothesCount,
-                longUnwornInsight,
                 categories
         );
     }
@@ -233,8 +223,11 @@ public class WeeklyReviewService {
     }
 
     private boolean wasRegisteredByPeriodEnd(Clothes clothes, LocalDate periodEndDate) {
-        return clothes.getCreatedAt() == null
-                || !clothes.getCreatedAt().toLocalDate().isAfter(periodEndDate);
+        if (clothes.getCreatedAt() == null) {
+            return false;
+        }
+
+        return !clothes.getCreatedAt().toLocalDate().isAfter(periodEndDate);
     }
 
     private String createLongUnwornInsight(int longUnwornClothesCount) {
