@@ -1,14 +1,17 @@
 package com.weartrack.backend.domain.member.controller;
 
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.weartrack.backend.domain.member.dto.request.NicknameSetReqDto;
+import com.weartrack.backend.domain.member.dto.request.RequiredTermsAgreementReqDto;
 import com.weartrack.backend.domain.member.dto.response.NicknameAvailabilityCheckResDto;
 import com.weartrack.backend.domain.member.dto.response.NicknameSetResDto;
 import com.weartrack.backend.domain.member.service.MemberService;
@@ -103,6 +106,33 @@ class MemberControllerTest {
                     .andExpect(jsonPath("$.isSuccess").value(true))
                     .andExpect(jsonPath("$.result.nickname").value("track"))
                     .andExpect(jsonPath("$.result.profileCompleted").value(true));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    @Test
+    @DisplayName("required terms agreement request succeeds")
+    void agreeRequiredTerms() throws Exception {
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                new JwtPrincipal(1L),
+                null,
+                List.of()
+        );
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authenticationToken);
+        SecurityContextHolder.setContext(context);
+
+        RequiredTermsAgreementReqDto request = new RequiredTermsAgreementReqDto(true);
+
+        try {
+            mockMvc.perform(post("/api/members/me/terms-agreement")
+                            .contentType(APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.isSuccess").value(true));
+
+            verify(memberService).agreeRequiredTerms(1L, request);
         } finally {
             SecurityContextHolder.clearContext();
         }

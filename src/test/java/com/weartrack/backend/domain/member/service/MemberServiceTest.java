@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.weartrack.backend.domain.member.dto.request.NicknameSetReqDto;
+import com.weartrack.backend.domain.member.dto.request.RequiredTermsAgreementReqDto;
 import com.weartrack.backend.domain.member.dto.response.NicknameAvailabilityCheckResDto;
 import com.weartrack.backend.domain.member.dto.response.NicknameSetResDto;
 import com.weartrack.backend.domain.member.entity.Member;
@@ -87,6 +88,32 @@ class MemberServiceTest {
                 .isInstanceOf(GeneralException.class)
                 .extracting("errorCode")
                 .isEqualTo(MemberErrorCode.NICKNAME_ALREADY_EXISTS);
+
+        verify(memberRepository, never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("required terms agreement updates member agreement fields")
+    void agreeRequiredTerms() {
+        Member member = Member.createPendingProfile();
+        ReflectionTestUtils.setField(member, "memberId", 1L);
+        given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+
+        memberService.agreeRequiredTerms(1L, new RequiredTermsAgreementReqDto(true));
+
+        assertThat(member.isTermsAgreed()).isTrue();
+        assertThat(member.isPrivacyAgreed()).isTrue();
+        assertThat(member.getTermsAgreedAt()).isNotNull();
+        assertThat(member.getPrivacyAgreedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("required terms agreement fails when request is false")
+    void agreeRequiredTermsFailWhenNotAgreed() {
+        assertThatThrownBy(() -> memberService.agreeRequiredTerms(1L, new RequiredTermsAgreementReqDto(false)))
+                .isInstanceOf(GeneralException.class)
+                .extracting("errorCode")
+                .isEqualTo(MemberErrorCode.REQUIRED_TERMS_NOT_AGREED);
 
         verify(memberRepository, never()).findById(any());
     }
