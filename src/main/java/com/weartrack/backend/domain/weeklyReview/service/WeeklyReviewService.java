@@ -5,9 +5,11 @@ import com.weartrack.backend.domain.clothes.repository.ClothesRepository;
 import com.weartrack.backend.domain.clothes.util.CategoryOrder;
 import com.weartrack.backend.domain.dailyReview.entity.DailyReview;
 import com.weartrack.backend.domain.dailyReview.repository.DailyReviewRepository;
+import com.weartrack.backend.domain.weeklyReview.dto.response.WeeklyReviewLongUnwornClothesResDto;
 import com.weartrack.backend.domain.weeklyReview.dto.response.WeeklyReviewSummaryResDto;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
@@ -30,7 +32,7 @@ public class WeeklyReviewService {
     private final ClothesRepository clothesRepository;
 
     public WeeklyReviewSummaryResDto getCurrentReviewSummary(Long memberId) {
-        return getReviewSummary(memberId, getCurrentWeekStartDate());
+        return getReviewSummary(memberId, getWeekStartDate(LocalDate.now(SEOUL_ZONE)));
     }
 
     public WeeklyReviewSummaryResDto getReviewSummary(Long memberId, LocalDate weekStartDate) {
@@ -58,7 +60,14 @@ public class WeeklyReviewService {
         int wornClothesCount = wornClothes.size();
         long totalClothesCount = clothes.size();
         int usageRate = calculateUsageRate(wornClothesCount, totalClothesCount);
-        String weeklyInsight = createWeeklyInsight(memberId, weekStartDate, usageRate);
+        String weeklyUsageInsight = createWeeklyInsight(memberId, weekStartDate, usageRate);
+        List<Clothes> longUnwornClothes = findMonthlyLongUnwornClothes(
+                memberId,
+                getPreviousMonth(getLongUnwornTargetMonth(weekStartDate))
+        );
+        int longUnwornClothesCount = longUnwornClothes.size();
+        String longUnwornInsight = createLongUnwornInsight(longUnwornClothesCount);
+        String weeklyInsight = appendInsight(weeklyUsageInsight, longUnwornInsight);
 
         return new WeeklyReviewSummaryResDto(
                 weekStartDate,
@@ -66,7 +75,30 @@ public class WeeklyReviewService {
                 wornClothesCount,
                 usageRate,
                 weeklyInsight,
+                longUnwornClothesCount,
                 categories
+        );
+    }
+
+    public WeeklyReviewLongUnwornClothesResDto getCurrentLongUnwornClothes(Long memberId) {
+        LocalDate currentWeekStartDate = getWeekStartDate(LocalDate.now(SEOUL_ZONE));
+        return getLongUnwornClothes(memberId, getLongUnwornTargetMonth(currentWeekStartDate));
+    }
+
+    public WeeklyReviewLongUnwornClothesResDto getLongUnwornClothes(
+            Long memberId,
+            YearMonth targetMonth
+    ) {
+        YearMonth previousMonth = getPreviousMonth(targetMonth);
+        LocalDate periodStartDate = getLongUnwornPeriodStartDate(previousMonth);
+        LocalDate periodEndDate = getLongUnwornPeriodEndDate(previousMonth);
+        List<Clothes> longUnwornClothes = findMonthlyLongUnwornClothes(memberId, previousMonth);
+
+        return new WeeklyReviewLongUnwornClothesResDto(
+                periodStartDate,
+                periodEndDate,
+                longUnwornClothes.size(),
+                toLongUnwornCategoryGroups(longUnwornClothes)
         );
     }
 
@@ -93,6 +125,34 @@ public class WeeklyReviewService {
                 .toList();
 
         return new WeeklyReviewSummaryResDto.CategoryGroup(category, items.size(), items);
+    }
+
+    private List<WeeklyReviewLongUnwornClothesResDto.CategoryGroup> toLongUnwornCategoryGroups(List<Clothes> clothes) {
+        return clothes.stream()
+                .collect(Collectors.groupingBy(
+                        Clothes::getCategory,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ))
+                .entrySet()
+                .stream()
+                .map(entry -> toLongUnwornCategoryGroup(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
+    private WeeklyReviewLongUnwornClothesResDto.CategoryGroup toLongUnwornCategoryGroup(
+            String category,
+            List<Clothes> clothes
+    ) {
+        List<WeeklyReviewLongUnwornClothesResDto.ClothesItem> items = clothes.stream()
+                .map(clothesItem -> new WeeklyReviewLongUnwornClothesResDto.ClothesItem(
+                        clothesItem.getId(),
+                        clothesItem.getImageUrl(),
+                        clothesItem.getColor()
+                ))
+                .toList();
+
+        return new WeeklyReviewLongUnwornClothesResDto.CategoryGroup(category, items.size(), items);
     }
 
     private String createWeeklyInsight(
@@ -134,6 +194,59 @@ public class WeeklyReviewService {
         return true;
     }
 
+    private List<Clothes> findMonthlyLongUnwornClothes(Long memberId, YearMonth targetMonth) {
+        LocalDate periodStartDate = getLongUnwornPeriodStartDate(targetMonth);
+        LocalDate periodEndDate = getLongUnwornPeriodEndDate(targetMonth);
+        Set<Long> wornClothesIds = getWornClothesIds(memberId, periodStartDate, periodEndDate);
+
+        return clothesRepository.findAllByMemberId(memberId)
+                .stream()
+                .filter(clothes -> wasRegisteredByPeriodEnd(clothes, periodEndDate))
+                .filter(clothes -> !wornClothesIds.contains(clothes.getId()))
+                .sorted(clothesComparator())
+                .toList();
+    }
+
+    private LocalDate getLongUnwornPeriodStartDate(YearMonth targetMonth) {
+        return targetMonth.atDay(1);
+    }
+
+    private LocalDate getLongUnwornPeriodEndDate(YearMonth targetMonth) {
+        return targetMonth.atDay(28);
+    }
+
+    private YearMonth getPreviousMonth(YearMonth targetMonth) {
+        return targetMonth.minusMonths(1);
+    }
+
+    private YearMonth getLongUnwornTargetMonth(LocalDate weekStartDate) {
+        return YearMonth.from(weekStartDate.plusDays(6));
+    }
+
+    private boolean wasRegisteredByPeriodEnd(Clothes clothes, LocalDate periodEndDate) {
+        if (clothes.getCreatedAt() == null) {
+            return false;
+        }
+
+        return !clothes.getCreatedAt().toLocalDate().isAfter(periodEndDate);
+    }
+
+    private String createLongUnwornInsight(int longUnwornClothesCount) {
+        if (longUnwornClothesCount == 0) {
+            return null;
+        }
+
+        return "오랫동안 안 입은 옷이 " + longUnwornClothesCount + "벌 있어요.";
+    }
+
+    private String appendInsight(String weeklyUsageInsight, String longUnwornInsight) {
+        if (longUnwornInsight == null) {
+            return weeklyUsageInsight;
+        }
+
+        return weeklyUsageInsight + "\n" + longUnwornInsight;
+    }
+
     private String createInsightMessage(int usageRateChange) {
         if (usageRateChange > 0) {
             return "지난 주보다 옷장을 " + usageRateChange + "%를 더 활용했어요!";
@@ -160,8 +273,7 @@ public class WeeklyReviewService {
         return (int) Math.round((wornClothesCount * 100.0) / totalClothesCount);
     }
 
-    private LocalDate getCurrentWeekStartDate() {
-        return LocalDate.now(SEOUL_ZONE)
-                .with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+    private LocalDate getWeekStartDate(LocalDate date) {
+        return date.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
     }
 }

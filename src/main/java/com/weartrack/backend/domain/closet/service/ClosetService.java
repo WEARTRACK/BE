@@ -151,7 +151,7 @@ public class ClosetService {
                 .map(ClosetSection::getSectionId)
                 .toList();
 
-        long clothesCount = clothesRepository.countByClosetSectionIdIn(sectionIds);
+        long clothesCount = clothesRepository.countByClosetSectionIdInAndDeletedAtIsNull(sectionIds);
 
         if (clothesCount > 0) {
             throw new GeneralException(ClosetErrorCode.CLOSET_NOT_EMPTY);
