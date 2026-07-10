@@ -1,6 +1,8 @@
 package com.weartrack.backend.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.weartrack.backend.domain.member.exception.AuthErrorCode;
+import com.weartrack.backend.domain.member.repository.MemberRepository;
 import com.weartrack.backend.global.exception.GeneralException;
 import com.weartrack.backend.global.response.ApiResponse;
 import jakarta.servlet.FilterChain;
@@ -28,10 +30,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final MemberRepository memberRepository;
     private final ObjectMapper objectMapper;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, ObjectMapper objectMapper) {
+    public JwtAuthenticationFilter(
+            JwtTokenProvider jwtTokenProvider,
+            MemberRepository memberRepository,
+            ObjectMapper objectMapper
+    ) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.memberRepository = memberRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -47,6 +55,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(authorizationHeader) && authorizationHeader.startsWith(BEARER_PREFIX)) {
                 String token = authorizationHeader.substring(BEARER_PREFIX.length());
                 Long memberId = jwtTokenProvider.extractMemberId(token);
+
+                if (!memberRepository.existsByMemberIdAndDeletedAtIsNull(memberId)) {
+                    throw new GeneralException(AuthErrorCode.WITHDRAWN_MEMBER);
+                }
 
                 JwtPrincipal principal = new JwtPrincipal(memberId);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(

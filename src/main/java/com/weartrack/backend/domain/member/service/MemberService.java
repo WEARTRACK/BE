@@ -51,6 +51,18 @@ public class MemberService {
         );
     }
 
+    @Transactional
+    public void withdraw(Long memberId) {
+        Member member = memberRepository.findByMemberIdForUpdate(memberId)
+                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        if (member.isWithdrawn()) {
+            throw new GeneralException(MemberErrorCode.MEMBER_ALREADY_WITHDRAWN);
+        }
+
+        member.withdraw();
+    }
+
     private void flushNicknameChange(Member member) {
         try {
             memberRepository.saveAndFlush(member);

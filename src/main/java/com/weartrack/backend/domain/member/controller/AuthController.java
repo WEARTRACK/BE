@@ -70,6 +70,11 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/api/auth/logout")
+    public ApiResponse<Void> logout() {
+        return ApiResponse.success();
+    }
+
 
     /**
      * Google 로그인 완료 후 전달된 인가 코드를 바로 처리합니다.
