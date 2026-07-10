@@ -110,7 +110,8 @@ public class DailyReviewService {
         LocalDate weekStartDate = getWeekStartDate(reviewDate);
         return weeklyReviewService.getReviewSummary(
                 memberId,
-                weekStartDate
+                weekStartDate,
+                reviewDate
         );
     }
 
