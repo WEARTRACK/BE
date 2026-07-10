@@ -63,7 +63,7 @@ public class WeeklyReviewService {
         String weeklyUsageInsight = createWeeklyInsight(memberId, weekStartDate, usageRate);
         List<Clothes> longUnwornClothes = findMonthlyLongUnwornClothes(
                 memberId,
-                getPreviousMonth(weekEndDate)
+                getPreviousMonth(getLongUnwornTargetMonth(weekStartDate))
         );
         int longUnwornClothesCount = longUnwornClothes.size();
         String longUnwornInsight = createLongUnwornInsight(longUnwornClothesCount);
@@ -81,7 +81,8 @@ public class WeeklyReviewService {
     }
 
     public WeeklyReviewLongUnwornClothesResDto getCurrentLongUnwornClothes(Long memberId) {
-        return getLongUnwornClothes(memberId, YearMonth.from(LocalDate.now(SEOUL_ZONE)));
+        LocalDate currentWeekStartDate = getWeekStartDate(LocalDate.now(SEOUL_ZONE));
+        return getLongUnwornClothes(memberId, getLongUnwornTargetMonth(currentWeekStartDate));
     }
 
     public WeeklyReviewLongUnwornClothesResDto getLongUnwornClothes(
@@ -214,12 +215,12 @@ public class WeeklyReviewService {
         return targetMonth.atDay(28);
     }
 
-    private YearMonth getPreviousMonth(LocalDate date) {
-        return YearMonth.from(date.minusMonths(1));
-    }
-
     private YearMonth getPreviousMonth(YearMonth targetMonth) {
         return targetMonth.minusMonths(1);
+    }
+
+    private YearMonth getLongUnwornTargetMonth(LocalDate weekStartDate) {
+        return YearMonth.from(weekStartDate.plusDays(6));
     }
 
     private boolean wasRegisteredByPeriodEnd(Clothes clothes, LocalDate periodEndDate) {
