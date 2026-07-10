@@ -110,16 +110,34 @@ public interface ClothesRepository extends JpaRepository<Clothes, Long> {
     long countByClosetSectionIdInAndDeletedAtIsNull(List<Long> closetSectionIds);
 
     @Query("""
-        SELECT c FROM Clothes c
-        WHERE c.closetSectionId IN (
-            SELECT s.sectionId FROM ClosetSection s
-            WHERE s.closet.memberId = :memberId
-        )
-        AND c.deletedAt IS NULL
-        AND (:color IS NULL OR c.color = :color)
-        AND (:category IS NULL OR REPLACE(REPLACE(UPPER(c.category), '-', '_'), ' ', '_') = :category)
-        """)
+    SELECT c FROM Clothes c
+    WHERE c.closetSectionId IN (
+        SELECT s.sectionId FROM ClosetSection s
+        WHERE s.closet.memberId = :memberId
+    )
+    AND c.deletedAt IS NULL
+    AND (:color IS NULL OR LOWER(c.color) = LOWER(:color))
+    AND (:category IS NULL OR REPLACE(REPLACE(UPPER(c.category), '-', '_'), ' ', '_') = :category)
+    """)
     Page<Clothes> searchByMemberIdAndFilters(
+            @Param("memberId") Long memberId,
+            @Param("color") String color,
+            @Param("category") String category,
+            Pageable pageable
+    );
+
+    @Query("""
+    SELECT c FROM Clothes c
+    WHERE c.closetSectionId IN (
+        SELECT s.sectionId FROM ClosetSection s
+        WHERE s.closet.memberId = :memberId
+    )
+    AND c.deletedAt IS NULL
+    AND LOWER(c.color) = LOWER(:color)
+    AND REPLACE(REPLACE(UPPER(c.category), '-', '_'), ' ', '_') = :category
+    ORDER BY c.createdAt DESC, c.id DESC
+    """)
+    Page<Clothes> findSimilarClothesForPurchaseCheck(
             @Param("memberId") Long memberId,
             @Param("color") String color,
             @Param("category") String category,
