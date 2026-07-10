@@ -117,4 +117,15 @@ class MemberServiceTest {
 
         verify(memberRepository, never()).findById(any());
     }
+
+    @Test
+    @DisplayName("required terms agreement fails when member is not found")
+    void agreeRequiredTermsFailWhenMemberNotFound() {
+        given(memberRepository.findById(1L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> memberService.agreeRequiredTerms(1L, new RequiredTermsAgreementReqDto(true)))
+                .isInstanceOf(GeneralException.class)
+                .extracting("errorCode")
+                .isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
+    }
 }

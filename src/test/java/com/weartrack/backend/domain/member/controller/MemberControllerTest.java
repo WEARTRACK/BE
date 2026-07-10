@@ -137,4 +137,27 @@ class MemberControllerTest {
             SecurityContextHolder.clearContext();
         }
     }
+
+    @Test
+    @DisplayName("required terms agreement returns validation error when agreement is missing")
+    void agreeRequiredTermsValidationFailWhenAgreementMissing() throws Exception {
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                new JwtPrincipal(1L),
+                null,
+                List.of()
+        );
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authenticationToken);
+        SecurityContextHolder.setContext(context);
+
+        try {
+            mockMvc.perform(post("/api/members/me/terms-agreement")
+                            .contentType(APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.isSuccess").value(false));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
 }
