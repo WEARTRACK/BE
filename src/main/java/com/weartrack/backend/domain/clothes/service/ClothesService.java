@@ -63,6 +63,7 @@ public class ClothesService {
                 .color(request.color())
                 .category(CategoryOrder.normalize(request.category()))
                 .price(request.price())
+                .purchaseDate(request.purchaseDate())
                 .build();
 
         Clothes savedClothes = clothesRepository.save(clothes);

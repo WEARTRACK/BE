@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
+
 public record ClothesCreateRequest(
 
         @NotNull(message = "옷 photoId는 필수입니다.")
@@ -25,6 +27,8 @@ public record ClothesCreateRequest(
         @NotNull(message = "가격은 필수입니다.")
         @Min(value = 0, message = "가격은 0원 이상이어야 합니다.")
         Integer price,
+
+        LocalDate purchaseDate,
 
         @NotNull(message = "옷장 closetId는 필수입니다.")
         Long closetId,
