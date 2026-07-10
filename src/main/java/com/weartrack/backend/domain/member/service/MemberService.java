@@ -2,6 +2,7 @@ package com.weartrack.backend.domain.member.service;
 
 import com.weartrack.backend.domain.member.dto.response.NicknameAvailabilityCheckResDto;
 import com.weartrack.backend.domain.member.dto.request.NicknameSetReqDto;
+import com.weartrack.backend.domain.member.dto.request.RequiredTermsAgreementReqDto;
 import com.weartrack.backend.domain.member.dto.response.NicknameSetResDto;
 import com.weartrack.backend.domain.member.entity.Member;
 import com.weartrack.backend.domain.member.exception.MemberErrorCode;
@@ -49,6 +50,18 @@ public class MemberService {
                 member.getNickname(),
                 member.hasNickname()
         );
+    }
+
+    @Transactional
+    public void agreeRequiredTerms(Long memberId, RequiredTermsAgreementReqDto request) {
+        if (!Boolean.TRUE.equals(request.requiredTermsAgreed())) {
+            throw new GeneralException(MemberErrorCode.REQUIRED_TERMS_NOT_AGREED);
+        }
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        member.agreeRequiredTerms();
     }
 
     @Transactional

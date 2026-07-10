@@ -36,6 +36,18 @@ public class Member extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "terms_agreed", nullable = false)
+    private boolean termsAgreed;
+
+    @Column(name = "privacy_agreed", nullable = false)
+    private boolean privacyAgreed;
+
+    @Column(name = "terms_agreed_at")
+    private LocalDateTime termsAgreedAt;
+
+    @Column(name = "privacy_agreed_at")
+    private LocalDateTime privacyAgreedAt;
+
     @OneToMany(mappedBy = "member")
     private final List<SocialAccount> socialAccounts = new ArrayList<>();
 
@@ -70,6 +82,14 @@ public class Member extends BaseTimeEntity {
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    public void agreeRequiredTerms() {
+        LocalDateTime now = LocalDateTime.now();
+        this.termsAgreed = true;
+        this.privacyAgreed = true;
+        this.termsAgreedAt = now;
+        this.privacyAgreedAt = now;
     }
 
     public void withdraw() {
