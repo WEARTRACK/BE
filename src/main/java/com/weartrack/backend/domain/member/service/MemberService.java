@@ -1,12 +1,15 @@
 package com.weartrack.backend.domain.member.service;
 
-import com.weartrack.backend.domain.member.dto.response.NicknameAvailabilityCheckResDto;
 import com.weartrack.backend.domain.member.dto.request.NicknameSetReqDto;
 import com.weartrack.backend.domain.member.dto.request.RequiredTermsAgreementReqDto;
+import com.weartrack.backend.domain.member.dto.response.MemberMyPageResDto;
+import com.weartrack.backend.domain.member.dto.response.NicknameAvailabilityCheckResDto;
 import com.weartrack.backend.domain.member.dto.response.NicknameSetResDto;
 import com.weartrack.backend.domain.member.entity.Member;
+import com.weartrack.backend.domain.member.entity.SocialAccount;
 import com.weartrack.backend.domain.member.exception.MemberErrorCode;
 import com.weartrack.backend.domain.member.repository.MemberRepository;
+import com.weartrack.backend.domain.member.repository.SocialAccountRepository;
 import com.weartrack.backend.global.exception.GeneralException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -17,9 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final SocialAccountRepository socialAccountRepository;
 
-    public MemberService(MemberRepository memberRepository) {
+    public MemberService(
+            MemberRepository memberRepository,
+            SocialAccountRepository socialAccountRepository
+    ) {
         this.memberRepository = memberRepository;
+        this.socialAccountRepository = socialAccountRepository;
     }
 
     /**
@@ -28,6 +36,21 @@ public class MemberService {
     public NicknameAvailabilityCheckResDto checkNicknameAvailability(String nickname) {
         boolean available = !memberRepository.existsByNickname(nickname);
         return new NicknameAvailabilityCheckResDto(nickname, available);
+    }
+
+    public MemberMyPageResDto getMyPageInfo(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        String email = socialAccountRepository.findFirstByMemberMemberId(memberId)
+                .map(SocialAccount::getProviderEmail)
+                .orElse(null);
+
+        return new MemberMyPageResDto(
+                member.getMemberId(),
+                member.getNickname(),
+                email
+        );
     }
 
     @Transactional
