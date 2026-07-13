@@ -42,7 +42,7 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new GeneralException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        String email = socialAccountRepository.findFirstByMemberMemberId(memberId)
+        String email = socialAccountRepository.findFirstByMemberMemberIdOrderBySocialAccountIdAsc(memberId)
                 .map(SocialAccount::getProviderEmail)
                 .orElse(null);
 
