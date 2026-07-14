@@ -14,4 +14,6 @@ public interface SocialAccountRepository extends JpaRepository<SocialAccount, Lo
      * 제공자와 제공자 사용자 식별자로 소셜 계정을 조회한다.
      */
     Optional<SocialAccount> findByProviderAndProviderUserId(AuthProvider provider, String providerUserId);
+
+    Optional<SocialAccount> findFirstByMemberMemberIdOrderBySocialAccountIdAsc(Long memberId);
 }
