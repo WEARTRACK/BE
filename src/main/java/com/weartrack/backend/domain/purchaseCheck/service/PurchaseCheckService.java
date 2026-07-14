@@ -1,5 +1,7 @@
 package com.weartrack.backend.domain.purchaseCheck.service;
 
+import com.weartrack.backend.domain.closet.entity.ClosetSection;
+import com.weartrack.backend.domain.closet.repository.ClosetSectionRepository;
 import com.weartrack.backend.domain.clothes.dto.ResultDto;
 import com.weartrack.backend.domain.clothes.dto.request.ProductLinkPreviewRequest;
 import com.weartrack.backend.domain.clothes.dto.response.AiClothesPredictionResponse;
@@ -16,24 +18,30 @@ import com.weartrack.backend.domain.purchaseCheck.dto.response.PurchaseCheckResD
 import com.weartrack.backend.domain.purchaseCheck.entity.enums.PurchaseCheckResultType;
 import com.weartrack.backend.global.exception.GeneralException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PurchaseCheckService {
 
     private final ClothesAiClient clothesAiClient;
     private final ProductLinkService productLinkService;
     private final ClothesRepository clothesRepository;
+    private final ClosetSectionRepository closetSectionRepository;
 
     public PurchaseCheckResDto checkByPhoto(
             Long memberId,
@@ -111,7 +119,30 @@ public class PurchaseCheckService {
                 ? PurchaseCheckResultType.HAS_SIMILAR_CLOTHES.message(similarClothes.getTotalElements())
                 : PurchaseCheckResultType.NO_SIMILAR_CLOTHES.message();
 
-        return PurchaseCheckResDto.from(message, similarClothes);
+        List<ClosetSection> sections = closetSectionRepository.findAllById(
+                similarClothes.getContent().stream()
+                        .map(Clothes::getClosetSectionId)
+                        .distinct()
+                        .toList()
+        );
+
+        Map<Long, String> closetNameMap = sections.stream()
+                .collect(Collectors.toMap(
+                        ClosetSection::getSectionId,
+                        section -> section.getCloset().getClosetName()
+                ));
+        Map<Long, String> sectionNameMap = sections.stream()
+                .collect(Collectors.toMap(
+                        ClosetSection::getSectionId,
+                        ClosetSection::getSectionName
+                ));
+
+        return PurchaseCheckResDto.from(
+                message,
+                similarClothes,
+                closetNameMap,
+                sectionNameMap
+        );
     }
 
     private Pageable createPageable(int page, int size) {
@@ -122,7 +153,12 @@ public class PurchaseCheckService {
             PurchaseCheckResultType resultType,
             Pageable pageable
     ) {
-        return PurchaseCheckResDto.from(resultType.message(), Page.empty(pageable));
+        return PurchaseCheckResDto.from(
+                resultType.message(),
+                Page.empty(pageable),
+                Map.of(),
+                Map.of()
+        );
     }
 
     private String normalizeCategory(String category) {

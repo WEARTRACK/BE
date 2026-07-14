@@ -2,6 +2,7 @@ package com.weartrack.backend.domain.member.controller;
 
 import com.weartrack.backend.domain.member.dto.request.NicknameSetReqDto;
 import com.weartrack.backend.domain.member.dto.request.RequiredTermsAgreementReqDto;
+import com.weartrack.backend.domain.member.dto.response.MemberMyPageResDto;
 import com.weartrack.backend.domain.member.dto.response.NicknameAvailabilityCheckResDto;
 import com.weartrack.backend.domain.member.dto.response.NicknameSetResDto;
 import com.weartrack.backend.domain.member.service.MemberService;
@@ -41,6 +42,13 @@ public class MemberController {
             String nickname
     ) {
         return ApiResponse.success(memberService.checkNicknameAvailability(nickname));
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<MemberMyPageResDto> getMyPageInfo(
+            @AuthenticationPrincipal JwtPrincipal principal
+    ) {
+        return ApiResponse.success(memberService.getMyPageInfo(principal.memberId()));
     }
 
     /**
