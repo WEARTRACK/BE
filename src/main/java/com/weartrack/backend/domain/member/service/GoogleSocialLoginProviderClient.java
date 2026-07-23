@@ -1,10 +1,17 @@
 package com.weartrack.backend.domain.member.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.weartrack.backend.domain.member.constant.AuthProvider;
 import com.weartrack.backend.domain.member.dto.SocialUserInfo;
 import com.weartrack.backend.domain.member.exception.AuthErrorCode;
 import com.weartrack.backend.global.exception.GeneralException;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -28,6 +35,7 @@ public class GoogleSocialLoginProviderClient implements SocialLoginProviderClien
     private final String clientId;
     private final String clientSecret;
     private final String redirectUri;
+    private final GoogleIdTokenVerifier idTokenVerifier;
 
     public GoogleSocialLoginProviderClient(
             RestClient restClient,
@@ -39,6 +47,12 @@ public class GoogleSocialLoginProviderClient implements SocialLoginProviderClien
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.redirectUri = redirectUri;
+        this.idTokenVerifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(),
+                GsonFactory.getDefaultInstance()
+        )
+                .setAudience(List.of(clientId))
+                .build();
     }
 
     /**
@@ -68,6 +82,25 @@ public class GoogleSocialLoginProviderClient implements SocialLoginProviderClien
                     getOptionalText(body, "email")
             );
         } catch (RestClientException e) {
+            throw new GeneralException(AuthErrorCode.INVALID_SOCIAL_TOKEN);
+        }
+    }
+
+    @Override
+    public SocialUserInfo getUserInfoByIdToken(String idToken) {
+        try {
+            GoogleIdToken verifiedIdToken = idTokenVerifier.verify(idToken);
+            if (verifiedIdToken == null) {
+                throw new GeneralException(AuthErrorCode.INVALID_SOCIAL_TOKEN);
+            }
+
+            GoogleIdToken.Payload payload = verifiedIdToken.getPayload();
+            return new SocialUserInfo(
+                    supports(),
+                    payload.getSubject(),
+                    payload.getEmail()
+            );
+        } catch (GeneralSecurityException | IOException e) {
             throw new GeneralException(AuthErrorCode.INVALID_SOCIAL_TOKEN);
         }
     }

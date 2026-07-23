@@ -14,6 +14,18 @@ public record SocialLoginReqDto(
 
         String state,
 
-        String handoffToken
+        String handoffToken,
+
+        String accessToken,
+
+        String idToken
 ) {
+    public SocialLoginReqDto(
+            AuthProvider provider,
+            String authorizationCode,
+            String state,
+            String handoffToken
+    ) {
+        this(provider, authorizationCode, state, handoffToken, null, null);
+    }
 }

@@ -14,7 +14,9 @@ import com.weartrack.backend.domain.member.constant.AuthClientType;
 import com.weartrack.backend.domain.member.constant.AuthProvider;
 import com.weartrack.backend.domain.member.dto.OAuthStatePayload;
 import com.weartrack.backend.domain.member.dto.request.SocialLoginReqDto;
+import com.weartrack.backend.domain.member.dto.request.TokenRefreshReqDto;
 import com.weartrack.backend.domain.member.dto.response.SocialLoginResDto;
+import com.weartrack.backend.domain.member.dto.response.TokenRefreshResDto;
 import com.weartrack.backend.domain.member.exception.AuthErrorCode;
 import com.weartrack.backend.domain.member.service.AuthService;
 import com.weartrack.backend.domain.member.service.OAuthHandoffService;
@@ -134,6 +136,23 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.isSuccess").value(false));
+    }
+
+    @Test
+    @DisplayName("refresh token으로 access token과 refresh token을 재발급한다.")
+    void refreshTokenSuccess() throws Exception {
+        TokenRefreshReqDto request = new TokenRefreshReqDto("refresh-token");
+        TokenRefreshResDto response = new TokenRefreshResDto("new-access-token", "new-refresh-token");
+
+        given(authService.refresh(request)).willReturn(response);
+
+        mockMvc.perform(post("/api/auth/token/refresh")
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.result.accessToken").value("new-access-token"))
+                .andExpect(jsonPath("$.result.refreshToken").value("new-refresh-token"));
     }
 
     @Test

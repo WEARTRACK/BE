@@ -11,6 +11,7 @@ import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -53,19 +54,39 @@ public class JwtTokenProvider {
      * 서명 검증이 끝난 JWT에서 memberId claim을 추출합니다.
      */
     public Long extractMemberId(String token) {
+        return extractMemberId(token, "access");
+    }
+
+    public Long extractMemberIdFromRefreshToken(String token) {
+        return extractMemberId(token, "refresh");
+    }
+
+    public Instant extractExpiresAtFromRefreshToken(String token) {
+        Claims claims = parseClaims(token);
+        String tokenType = claims.get("tokenType", String.class);
+        if (!"refresh".equals(tokenType)) {
+            throw new GeneralException(AuthErrorCode.INVALID_JWT_TOKEN);
+        }
+        return claims.getExpiration().toInstant();
+    }
+
+    private Long extractMemberId(String token, String expectedTokenType) {
+        Claims claims = parseClaims(token);
+        String tokenType = claims.get("tokenType", String.class);
+        if (!expectedTokenType.equals(tokenType)) {
+            throw new GeneralException(AuthErrorCode.INVALID_JWT_TOKEN);
+        }
+
+        return claims.get("memberId", Long.class);
+    }
+
+    private Claims parseClaims(String token) {
         try {
-            Claims claims = Jwts.parser()
+            return Jwts.parser()
                     .verifyWith(secretKey)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-
-            String tokenType = claims.get("tokenType", String.class);
-            if (!"access".equals(tokenType)) {
-                throw new GeneralException(AuthErrorCode.INVALID_JWT_TOKEN);
-            }
-
-            return claims.get("memberId", Long.class);
         } catch (JwtException | IllegalArgumentException e) {
             throw new GeneralException(AuthErrorCode.INVALID_JWT_TOKEN);
         }
@@ -80,6 +101,7 @@ public class JwtTokenProvider {
                 .subject(String.valueOf(memberId))
                 .claim("memberId", memberId)
                 .claim("tokenType", tokenType)
+                .id(UUID.randomUUID().toString())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(expirationSeconds)))
                 .signWith(secretKey)

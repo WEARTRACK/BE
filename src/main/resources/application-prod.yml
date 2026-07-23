@@ -53,6 +53,8 @@ oauth:
     client-secret: ${NAVER_CLIENT_SECRET}
     redirect-uri: ${NAVER_REDIRECT_URI}
     scope: ${NAVER_AUTH_SCOPE:name email}
+  apple:
+    client-id: ${APPLE_CLIENT_ID:com.weartrack.app}
 
 file:
   upload-dir: uploads
