@@ -12,14 +12,19 @@ import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.spec.RSAPublicKeySpec;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+@Slf4j
 @Component
 public class AppleSocialLoginProviderClient implements SocialLoginProviderClient {
 
@@ -27,10 +32,13 @@ public class AppleSocialLoginProviderClient implements SocialLoginProviderClient
     private static final String APPLE_ISSUER = "https://appleid.apple.com";
     private static final String RSA_ALGORITHM = "RSA";
     private static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
+    private static final Duration JWKS_CACHE_TTL = Duration.ofHours(6);
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
     private final String clientId;
+    private final Map<String, PublicKey> publicKeyCache = new ConcurrentHashMap<>();
+    private volatile Instant publicKeyCacheExpiresAt = Instant.EPOCH;
 
     public AppleSocialLoginProviderClient(
             RestClient restClient,
@@ -71,7 +79,11 @@ public class AppleSocialLoginProviderClient implements SocialLoginProviderClient
             );
         } catch (GeneralException e) {
             throw e;
+        } catch (RestClientException e) {
+            log.warn("Failed to fetch Apple public keys.", e);
+            throw new GeneralException(AuthErrorCode.SOCIAL_PROVIDER_UNAVAILABLE);
         } catch (Exception e) {
+            log.warn("Unexpected Apple id token verification failure.", e);
             throw new GeneralException(AuthErrorCode.INVALID_SOCIAL_TOKEN);
         }
     }
@@ -102,6 +114,28 @@ public class AppleSocialLoginProviderClient implements SocialLoginProviderClient
 
     private PublicKey findPublicKey(JsonNode header) throws Exception {
         String keyId = getRequiredText(header, "kid");
+        PublicKey cachedPublicKey = getCachedPublicKey(keyId);
+        if (cachedPublicKey != null) {
+            return cachedPublicKey;
+        }
+
+        refreshPublicKeyCache();
+        PublicKey refreshedPublicKey = publicKeyCache.get(keyId);
+        if (refreshedPublicKey != null) {
+            return refreshedPublicKey;
+        }
+
+        throw new GeneralException(AuthErrorCode.INVALID_SOCIAL_TOKEN);
+    }
+
+    private PublicKey getCachedPublicKey(String keyId) {
+        if (publicKeyCacheExpiresAt.isAfter(Instant.now())) {
+            return publicKeyCache.get(keyId);
+        }
+        return null;
+    }
+
+    private synchronized void refreshPublicKeyCache() throws Exception {
         JsonNode keysBody = restClient.get()
                 .uri(APPLE_KEYS_URI)
                 .retrieve()
@@ -112,13 +146,17 @@ public class AppleSocialLoginProviderClient implements SocialLoginProviderClient
             throw new GeneralException(AuthErrorCode.INVALID_SOCIAL_TOKEN);
         }
 
+        Map<String, PublicKey> refreshedKeys = new ConcurrentHashMap<>();
         for (JsonNode key : keys) {
-            if (keyId.equals(getOptionalText(key, "kid"))) {
-                return createPublicKey(key);
+            String keyId = getOptionalText(key, "kid");
+            if (keyId != null) {
+                refreshedKeys.put(keyId, createPublicKey(key));
             }
         }
 
-        throw new GeneralException(AuthErrorCode.INVALID_SOCIAL_TOKEN);
+        publicKeyCache.clear();
+        publicKeyCache.putAll(refreshedKeys);
+        publicKeyCacheExpiresAt = Instant.now().plus(JWKS_CACHE_TTL);
     }
 
     private PublicKey createPublicKey(JsonNode key) throws Exception {

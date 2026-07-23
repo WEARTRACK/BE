@@ -15,6 +15,7 @@ public enum AuthErrorCode implements BaseErrorCode {
     INVALID_SOCIAL_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_1", "Invalid social access token."),
     SOCIAL_USER_INFO_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH_401_2", "Failed to load social user information."),
     INVALID_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_3", "Invalid JWT token."),
+    SOCIAL_PROVIDER_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "AUTH_503_1", "Social provider is temporarily unavailable."),
     WITHDRAWN_MEMBER(HttpStatus.FORBIDDEN, "AUTH_403_1", "탈퇴한 회원입니다."),
     REJOIN_BLOCKED(HttpStatus.FORBIDDEN, "AUTH_403_2", "탈퇴 후 7일 동안 같은 계정으로 재가입할 수 없습니다.");
 

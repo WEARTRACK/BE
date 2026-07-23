@@ -48,6 +48,7 @@ public class SecurityConfig {
                                 "/actuator/prometheus",
                                 "/api/auth/social/authorize/*",
                                 "/api/auth/social/login",
+                                "/api/auth/token/refresh",
                                 "/login/oauth2/code/google",
                                 "/login/oauth2/code/kakao",
                                 "/login/oauth2/code/naver",
