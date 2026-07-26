@@ -4,7 +4,9 @@ import com.weartrack.backend.domain.member.constant.AuthClientType;
 import com.weartrack.backend.domain.member.constant.AuthProvider;
 import com.weartrack.backend.domain.member.dto.OAuthStatePayload;
 import com.weartrack.backend.domain.member.dto.request.SocialLoginReqDto;
+import com.weartrack.backend.domain.member.dto.request.TokenRefreshReqDto;
 import com.weartrack.backend.domain.member.dto.response.SocialLoginResDto;
+import com.weartrack.backend.domain.member.dto.response.TokenRefreshResDto;
 import com.weartrack.backend.domain.member.service.AuthService;
 import com.weartrack.backend.domain.member.service.OAuthHandoffService;
 import com.weartrack.backend.domain.member.service.OAuthStateService;
@@ -73,6 +75,13 @@ public class AuthController {
     @PostMapping("/api/auth/logout")
     public ApiResponse<Void> logout() {
         return ApiResponse.success();
+    }
+
+    @PostMapping("/api/auth/token/refresh")
+    public ApiResponse<TokenRefreshResDto> refreshToken(
+            @Valid @RequestBody TokenRefreshReqDto request
+    ) {
+        return ApiResponse.success(authService.refresh(request));
     }
 
 

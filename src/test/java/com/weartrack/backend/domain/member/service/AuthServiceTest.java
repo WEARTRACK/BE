@@ -11,7 +11,9 @@ import com.weartrack.backend.domain.member.constant.AuthProvider;
 import com.weartrack.backend.domain.member.dto.OAuthHandoffPayload;
 import com.weartrack.backend.domain.member.dto.SocialUserInfo;
 import com.weartrack.backend.domain.member.dto.request.SocialLoginReqDto;
+import com.weartrack.backend.domain.member.dto.request.TokenRefreshReqDto;
 import com.weartrack.backend.domain.member.dto.response.SocialLoginResDto;
+import com.weartrack.backend.domain.member.dto.response.TokenRefreshResDto;
 import com.weartrack.backend.global.exception.GeneralException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +35,9 @@ class AuthServiceTest {
     @Mock
     private OAuthHandoffService oAuthHandoffService;
 
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
     private AuthService authService;
 
     @BeforeEach
@@ -41,7 +46,8 @@ class AuthServiceTest {
         authService = new AuthService(
                 List.of(socialLoginProviderClient),
                 authLoginTransactionService,
-                oAuthHandoffService
+                oAuthHandoffService,
+                refreshTokenService
         );
     }
 
@@ -175,5 +181,28 @@ class AuthServiceTest {
         assertThat(response.memberId()).isEqualTo(4L);
         verify(oAuthHandoffService).consume(AuthProvider.KAKAO, "handoff-token");
         verify(authLoginTransactionService).loginOrRegister(socialUserInfo);
+    }
+
+    @Test
+    @DisplayName("refresh token이 유효하면 access token과 refresh token을 재발급한다.")
+    void refreshTokenSuccess() {
+        given(refreshTokenService.rotate("refresh-token"))
+                .willReturn(new TokenRefreshResDto("new-access-token", "new-refresh-token"));
+
+        TokenRefreshResDto response = authService.refresh(new TokenRefreshReqDto("refresh-token"));
+
+        assertThat(response.accessToken()).isEqualTo("new-access-token");
+        assertThat(response.refreshToken()).isEqualTo("new-refresh-token");
+    }
+
+    @Test
+    @DisplayName("refresh token의 회원이 없거나 탈퇴 상태면 재발급하지 않는다.")
+    void refreshTokenFailsWhenMemberInactive() {
+        given(refreshTokenService.rotate("refresh-token")).willThrow(new GeneralException(
+                com.weartrack.backend.domain.member.exception.AuthErrorCode.INVALID_JWT_TOKEN
+        ));
+
+        assertThatThrownBy(() -> authService.refresh(new TokenRefreshReqDto("refresh-token")))
+                .isInstanceOf(GeneralException.class);
     }
 }
