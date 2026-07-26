@@ -80,10 +80,10 @@ public class AppleSocialLoginProviderClient implements SocialLoginProviderClient
         } catch (GeneralException e) {
             throw e;
         } catch (RestClientException e) {
-            log.warn("Failed to fetch Apple public keys.", e);
+            log.warn("Apple 공개키 조회에 실패했습니다.", e);
             throw new GeneralException(AuthErrorCode.SOCIAL_PROVIDER_UNAVAILABLE);
         } catch (Exception e) {
-            log.warn("Unexpected Apple id token verification failure.", e);
+            log.warn("Apple ID 토큰 검증 중 예상하지 못한 오류가 발생했습니다.", e);
             throw new GeneralException(AuthErrorCode.INVALID_SOCIAL_TOKEN);
         }
     }
