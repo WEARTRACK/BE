@@ -35,6 +35,29 @@ class JwtTokenProviderTest {
     }
 
     @Test
+    @DisplayName("refresh token에서 memberId를 추출할 수 있다.")
+    void extractMemberIdFromRefreshToken() {
+        JwtTokenProvider jwtTokenProvider = new JwtTokenProvider(SECRET, 3600L, 1209600L);
+
+        String refreshToken = jwtTokenProvider.createRefreshToken(2L);
+
+        Long memberId = jwtTokenProvider.extractMemberIdFromRefreshToken(refreshToken);
+
+        assertThat(memberId).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("access token은 refresh token 추출에 사용할 수 없다.")
+    void extractMemberIdFromRefreshTokenRejectsAccessToken() {
+        JwtTokenProvider jwtTokenProvider = new JwtTokenProvider(SECRET, 3600L, 1209600L);
+
+        String accessToken = jwtTokenProvider.createAccessToken(3L);
+
+        assertThatThrownBy(() -> jwtTokenProvider.extractMemberIdFromRefreshToken(accessToken))
+                .isInstanceOf(GeneralException.class);
+    }
+
+    @Test
     @DisplayName("잘못된 JWT는 GeneralException을 발생시킨다.")
     void extractMemberIdFail() {
         JwtTokenProvider jwtTokenProvider = new JwtTokenProvider(SECRET, 3600L, 1209600L);

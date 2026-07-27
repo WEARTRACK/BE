@@ -21,15 +21,18 @@ public class AuthLoginTransactionService {
     private final SocialAccountRepository socialAccountRepository;
     private final AuthRegistrationService authRegistrationService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthLoginTransactionService(
             SocialAccountRepository socialAccountRepository,
             AuthRegistrationService authRegistrationService,
-            JwtTokenProvider jwtTokenProvider
+            JwtTokenProvider jwtTokenProvider,
+            RefreshTokenService refreshTokenService
     ) {
         this.socialAccountRepository = socialAccountRepository;
         this.authRegistrationService = authRegistrationService;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
@@ -42,7 +45,7 @@ public class AuthLoginTransactionService {
         reactivateIfRejoinAllowed(member);
 
         String accessToken = jwtTokenProvider.createAccessToken(member.getMemberId());
-        String refreshToken = jwtTokenProvider.createRefreshToken(member.getMemberId());
+        String refreshToken = refreshTokenService.issue(member);
 
         return new SocialLoginResDto(
                 member.getMemberId(),

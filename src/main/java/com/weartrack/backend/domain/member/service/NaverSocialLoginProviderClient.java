@@ -56,6 +56,15 @@ public class NaverSocialLoginProviderClient implements SocialLoginProviderClient
     public SocialUserInfo getUserInfo(String authorizationCode, String state) {
         try {
             String accessToken = exchangeCodeForAccessToken(authorizationCode, state);
+            return getUserInfoByAccessToken(accessToken);
+        } catch (RestClientException e) {
+            throw new GeneralException(AuthErrorCode.INVALID_SOCIAL_TOKEN);
+        }
+    }
+
+    @Override
+    public SocialUserInfo getUserInfoByAccessToken(String accessToken) {
+        try {
             JsonNode body = restClient.get()
                     .uri(USER_INFO_URI)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
