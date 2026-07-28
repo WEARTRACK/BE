@@ -12,13 +12,13 @@ import com.weartrack.backend.global.exception.GeneralException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -41,17 +41,21 @@ public class GoogleSocialLoginProviderClient implements SocialLoginProviderClien
             RestClient restClient,
             @Value("${GOOGLE_CLIENT_ID}") String clientId,
             @Value("${GOOGLE_CLIENT_SECRET}") String clientSecret,
-            @Value("${GOOGLE_REDIRECT_URI}") String redirectUri
+            @Value("${GOOGLE_REDIRECT_URI}") String redirectUri,
+            @Value("${GOOGLE_IOS_CLIENT_ID:}") String iosClientId
     ) {
         this.restClient = restClient;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.redirectUri = redirectUri;
+        List<String> audiences = List.of(clientId, iosClientId).stream()
+                .filter(StringUtils::hasText)
+                .toList();
         this.idTokenVerifier = new GoogleIdTokenVerifier.Builder(
                 new NetHttpTransport(),
                 GsonFactory.getDefaultInstance()
         )
-                .setAudience(List.of(clientId))
+                .setAudience(audiences)
                 .build();
     }
 
